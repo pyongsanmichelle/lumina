@@ -1,0 +1,38 @@
+@startuml dev-architecture
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName "Noto Sans CJK JP"
+
+title Dev Architecture (WSL2 + Docker Compose)
+
+node "Windows" as win {
+  [IntelliJ IDEA] as ij
+  node "WSL2 (Ubuntu)" as wsl {
+    [Docker Engine] as docker
+    folder "Workspace (Git)" as repo
+
+    rectangle "docker compose network" as net {
+      [frontend\nNuxt dev server] as fe
+      [bff\nSpring Boot (Kotlin)\nDevTools] as bff
+      [backend\nSpring Boot (Kotlin)\nDevTools] as be
+      database "postgres\n(PostgreSQL)" as db
+      [pgAdmin\n(optional)] as pg
+    }
+  }
+}
+
+ij --> repo : edit / debug
+docker --> net : run containers
+fe --> bff : API call
+bff --> be : API call
+be --> db : SQL
+pg --> db : optional admin
+
+note right of ij
+.devcontainer を使う場合:
+- JetBrains Gateway 等で
+  コンテナ内のIDEバックエンドに接続
+- JDK/Node/Gradle をコンテナ内に統一
+end note
+
+@enduml
