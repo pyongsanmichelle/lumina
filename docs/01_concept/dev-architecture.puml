@@ -3,10 +3,10 @@ skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam defaultFontName "Noto Sans CJK JP"
 
-title Dev Architecture (WSL2 + Docker Compose)
+title Dev Architecture (WSL2 + Docker Compose + devcontainer option)
 
 node "Windows" as win {
-  [IntelliJ IDEA] as ij
+  [Visual Studio Code] as vsc
   node "WSL2 (Ubuntu)" as wsl {
     [Docker Engine] as docker
     folder "Workspace (Git)" as repo
@@ -21,18 +21,17 @@ node "Windows" as win {
   }
 }
 
-ij --> repo : edit / debug
+vsc --> repo : edit / debug
 docker --> net : run containers
-fe --> bff : API call
-bff --> be : API call
-be --> db : SQL
+fe --> bff : /api (dev)
+bff --> be : internal REST
+be --> db : SQL 5432
 pg --> db : optional admin
 
-note right of ij
-.devcontainer を使う場合:
-- JetBrains Gateway 等で
-  コンテナ内のIDEバックエンドに接続
-- JDK/Node/Gradle をコンテナ内に統一
+note right of vsc
+.devcontainer:
+- 開発ツール(JDK/Node/Gradle)を
+  devcontainer に内包
 end note
 
 @enduml

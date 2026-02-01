@@ -3,64 +3,71 @@ skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam defaultFontName "Noto Sans CJK JP"
 
-title AWS Architecture (Prod/Stg)
+title AWS Architecture (SSRなし / CloudFront + S3 + ECS + RDS)
 
-rectangle "Internet" as net
+rectangle "Users (Browser)" as user
 
-rectangle "AWS Account (prod or stg)\nVPC" as vpc {
-  rectangle "Public Subnets" as pub {
-    [ALB\n(HTTPS Termination)] as alb
-  }
+rectangle "AWS Account (prod or stg)" as aws {
 
-  rectangle "Private Subnets" as priv {
-    rectangle "ECS Cluster (Fargate)" as ecs {
-      [Frontend\nNuxt SSR (Node)] as fe
-      [BFF\nSpring Boot (Kotlin)] as bff
-      [Backend\nSpring Boot (Kotlin)] as be
-      [Batch Task\nSpring Batch\n(Scheduled)] as batch
+  rectangle "CloudFront" as cf
+  storage "S3 (Nuxt SSG static)" as s3
+  [WAF (optional)] as waf
+
+  rectangle "VPC" as vpc {
+    rectangle "Public Subnets" as pub {
+      [ALB (API)] as alb
     }
 
-    database "RDS PostgreSQL" as rds
+    rectangle "Private Subnets" as priv {
+      rectangle "ECS Cluster (Fargate)" as ecs {
+        [BFF\nSpring Boot (Kotlin)\nREST] as bff
+        [Backend\nSpring Boot (Kotlin)] as be
+        [Batch Task\nSpring Batch\n(Scheduled)] as batch
+      }
+      database "RDS PostgreSQL" as rds
+    }
   }
 
+  [EventBridge Scheduler] as ev
+  [CloudWatch Logs/Metrics] as cw
   [Secrets Manager] as secrets
   [SSM Parameter Store] as ssm
-  [CloudWatch Logs/Metrics] as cw
-  [EventBridge Scheduler] as ev
   [ECR] as ecr
+  rectangle "OIDC IdP\n(Entra ID / Keycloak / Okta)" as idp
 }
 
-net --> alb : HTTPS
-alb --> fe : HTTP (internal)\n/ (SSR) or static proxy
-alb --> bff : HTTP (internal)\n/api
-fe --> bff : internal API calls\n(optional if SSR)
-bff --> be : REST/GraphQL
+user --> cf : HTTPS\napp.example.com
+waf -up- cf
+cf --> s3 : Origin (static)
+cf --> alb : Origin (/api/*)
+
+user --> idp : OIDC login\n(Auth Code + PKCE)
+
+alb --> bff : /api
+bff --> be : internal REST
 be --> rds : SQL 5432
 batch --> rds : SQL 5432
+ev --> batch : RunTask schedule
 
-ev --> batch : run task on schedule
-
-fe ..> secrets : read secrets (task role)
-bff ..> secrets
+bff ..> secrets : read secrets
 be ..> secrets
 batch ..> secrets
 
-fe ..> ssm
 bff ..> ssm
 be ..> ssm
 batch ..> ssm
 
-fe ..> cw : logs/metrics
-bff ..> cw
+bff ..> cw : logs/metrics
 be ..> cw
 batch ..> cw
 
 ecr ..> ecs : image pull
 
-note right of fe
-SSRが不要なら:
-Frontendは S3 + CloudFront に移行し
-ECSの常時稼働を減らすと運用/コストが改善
+note right of cf
+同一ドメインで
+- / は静的(CloudFront+S3)
+- /api はALB→BFF
+にするとCORS/運用が楽
 end note
 
 @enduml
