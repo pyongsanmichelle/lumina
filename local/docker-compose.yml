@@ -1,0 +1,85 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ../apps/backend
+      dockerfile: Dockerfile.dev
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-app}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-app}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      OIDC_ISSUER_URI: ${OIDC_ISSUER_URI}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE}
+    ports:
+      - "${BACKEND_PORT:-8082}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../apps/backend:/workspace
+    working_dir: /workspace
+
+  bff:
+    build:
+      context: ../apps/bff
+      dockerfile: Dockerfile.dev
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      BACKEND_BASE_URL: http://backend:8080
+      OIDC_ISSUER_URI: ${OIDC_ISSUER_URI}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE}
+    ports:
+      - "${BFF_PORT:-8081}:8080"
+    depends_on:
+      - backend
+    volumes:
+      - ../apps/bff:/workspace
+    working_dir: /workspace
+
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:${BFF_PORT:-8081} # 開発では http://localhost:3000 などに合わせる
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - bff
+    volumes:
+      - ../apps/frontend:/workspace
+    working_dir: /workspace
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
