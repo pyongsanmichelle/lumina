@@ -1,58 +1,113 @@
-# Web業務システム構成案（Nuxt + Spring Boot(Kotlin) + PostgreSQL）
+# Web業務システム構成案
 
-## 目的
-- フロントエンド、BFF、バックエンド、DBで責務分離
-- Spring Batchを利用したバッチ処理を想定
-- 本番/ステージングはAWS（ECS + RDS）で運用
-- 開発はWSL2 + Docker（DBもDocker）
-- IDEはIntelliJ（可能なら.devcontainer）
+## 構想
 
----
-
-## AWS 本番/ステージング構成（推奨）
-### ネットワーク
-- VPC
-  - Public Subnet: ALB
-  - Private Subnet: ECS Tasks, RDS PostgreSQL
-
-### コンポーネント
-- ALB（HTTPS終端、WAFは必要に応じて）
-- ECS(Fargate)
-  - frontend（Nuxt SSR/Nodeコンテナ）※静的化できるならS3+CloudFront推奨
-  - bff（Spring Boot Kotlin）
-  - backend（Spring Boot Kotlin）
-  - batch（Spring Batch：Scheduled Task）
-- RDS PostgreSQL（Multi-AZは本番で推奨）
-- Secrets Manager（DBパスワード、JWT秘密鍵など）
-- SSM Parameter Store（環境変数・設定）
-- CloudWatch Logs / Metrics（監視・アラート）
-- EventBridge Scheduler（バッチ起動）
-
----
-
-## 開発環境（WSL2 + Docker Compose）
-### 目的
-- `docker compose up` でフロント/BFF/バック/DBが起動
-- ホットリロード・デバッグを容易に
-
-### 構成
-- frontend: Nuxt dev server
-- bff: Spring Boot + DevTools
-- backend: Spring Boot + DevTools
-- db: PostgreSQL
-- (任意) pgAdmin
-
----
-
-## 推奨する実装規約
-- API契約: OpenAPI（backend）/ BFFはUIに最適化したDTOを提供
-- DBマイグレーション: Flyway（CI/CDまたは起動時）
-- 監視: 構造化ログ(JSON) + トレース(OTel)
-- セキュリティ: Secrets Manager/SSM、IAM最小権限
+- FE、BFF、BE、DB で責務分離
+  - FE: Frontend
+    - Nuxt.js
+    - SSG（Static Site Generation）
+  - BFF: Backend for Frontend
+    - Spring Web
+    - Kotlin
+    - Gradle
+  - BE: Backend
+    - Spring Boot
+    - Kotlin
+    - Gradle
+- Batch
+  - Spring Batch
+  - Kotlin
+- DB
+  - PostgreSQL
+  - Flyway
+- 環境
+  - 本番 / ステージング
+    - AWS
+      - VPC
+        - Public Subnet: ALB
+        - Private Subnet: ECS Tasks, RDS PostgreSQL
+      - FE: CloudFront + S3
+      - BFF: ECS（Fargate）
+      - BE: ECS（Fargate）
+      - DB: RDS
+      - Batch: EventBridge Scheduler
+      - Secrets Manager
+      - SSM Parameter Store
+      - CloudWatch Logs / Metrics
+  - 開発
+    - WSL2 + Docker（WEB / BFF / API / DB）
+    - IDE
+      - Visual Studio Code
+      - Dev Containers
+- 認証
+  - OIDC
+  - Microsoft Entra ID
+    - ※ Keycloak、Okta等に差し替え可能とする
 
 ---
 
-## 代替案（最適化案）
-1) Nuxtを静的配信（S3+CloudFront）に寄せる（SSR不要なら最優先推奨）
-2) 小規模のうちはBFFを省略し、backendに統合（成長後にBFF追加）
-3) バッチが増えるならStep Functions/AWS Batchも検討
+## 1. 全体方針
+
+- Frontend は SSR を使わず、静的生成（SSG）して S3 へ配置し、CloudFront で配信する
+- API は BFF（REST）を入口にし、Backend へ内部通信する
+- 認証は OIDC（Authorization Code + PKCE）を前提とし、BFF / Backend は JWT 検証する
+- バッチはSpring Batchを ECS タスクとして実行し、EventBridge Schedulerで起動する
+- DB は RDS PostgreSQL（Private）に配置する
+
+---
+
+## 2. コンポーネント
+
+### Frontend
+
+- Nuxt SSG 成果物を S3 へ配置
+- CloudFront を通して配信
+- /api/* は CloudFront の別オリジンで ALB へルーティング
+
+### BFF (Spring Boot Kotlin / REST)
+
+- ブラウザからの API 窓口
+- OIDC トークン(JWT)検証（Resource Server）
+- UI 向け DTO に整形/集約
+- Backend を呼び出し
+
+### Backend (Spring Boot Kotlin)
+
+- ドメインロジック
+- DB アクセス
+- 必要に応じて JWT 検証
+
+### Batch (Spring Batch)
+
+- ECS Scheduled Task（EventBridge Scheduler → ECS RunTask）
+- 実行ログは CloudWatch
+- ジョブメタデータは PostgreSQL に保存
+
+### DB (RDS PostgreSQL)
+
+- Private subnet に配置
+- 本番は Multi-AZ
+- マイグレーションは Flyway
+
+---
+
+## 3. OIDC（IdP差し替え可能設計）
+
+- issuer-uri（OIDC discovery URL）と audience を環境変数化
+- IdP 固有のクレーム（roles/groups/scpなど）はアプリ側でマッピング層を持つ
+- これにより Entra ID / Keycloak / Okta などを設定変更で切り替え可能とする
+
+---
+
+## 4. 環境分離
+
+- 本番 / ステージング は AWS アカウント分離
+
+---
+
+## 5. 開発環境（WSL2 + Docker Compose）
+
+- FE: nuxt dev server
+- BFF: spring boot + devtools
+- BE: spring boot + devtools
+- DB: postgres
