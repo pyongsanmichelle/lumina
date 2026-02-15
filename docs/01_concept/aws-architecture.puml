@@ -46,7 +46,11 @@ alb --> bff : route /api/*
 title AWS Architecture (SSRなし / CloudFront + S3 + ECS + RDS)
 =======
 title AWS Architecture (Nuxt SSG/SPA + OIDC + ECS + RDS)
+<<<<<<< HEAD
 >>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
+=======
+>>>>>>> 8efb4b0 ([#1] 構成をブラッシュアップ)
+>>>>>>> c267039 (gpgキーを指定後再コミット)
 
 rectangle "Users (Browser)" as user
 rectangle "OIDC IdP\n(Entra ID / Keycloak / Okta)" as idp
@@ -83,10 +87,17 @@ user --> alb : HTTPS\nAuthorization: Bearer
 
 <<<<<<< HEAD
 alb --> bff : /api
+<<<<<<< HEAD
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
 =======
 alb --> bff : route /api/*
 >>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
+=======
+>>>>>>> 580b93e ([#1] 構成案をブラッシュアップ)
+=======
+alb --> bff : route /api/*
+>>>>>>> 8efb4b0 ([#1] 構成をブラッシュアップ)
+>>>>>>> c267039 (gpgキーを指定後再コミット)
 bff --> be : internal REST
 be --> rds : SQL 5432
 batch --> rds : SQL 5432
@@ -105,7 +116,11 @@ bff ..> cw
 bff ..> secrets : read secrets
 =======
 bff ..> secrets
+<<<<<<< HEAD
 >>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
+=======
+>>>>>>> 8efb4b0 ([#1] 構成をブラッシュアップ)
+>>>>>>> c267039 (gpgキーを指定後再コミット)
 be ..> secrets
 batch ..> secrets
 bff ..> ssm
@@ -114,10 +129,17 @@ batch ..> ssm
 <<<<<<< HEAD
 
 bff ..> cw : logs/metrics
+<<<<<<< HEAD
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
 =======
 bff ..> cw
 >>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
+=======
+>>>>>>> 580b93e ([#1] 構成案をブラッシュアップ)
+=======
+bff ..> cw
+>>>>>>> 8efb4b0 ([#1] 構成をブラッシュアップ)
+>>>>>>> c267039 (gpgキーを指定後再コミット)
 be ..> cw
 batch ..> cw
 ecr ..> ecs : image pull
@@ -133,12 +155,20 @@ note right of cf
 - / は静的(CloudFront+S3)
 - /api はALB→BFF
 にするとCORS/運用が楽
+<<<<<<< HEAD
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
+=======
+>>>>>>> 580b93e ([#1] 構成案をブラッシュアップ)
+>>>>>>> c267039 (gpgキーを指定後再コミット)
 =======
 - / は静的配信
 - /api は ALB → BFF
 に統一するとCORS対応が容易
+<<<<<<< HEAD
 >>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
+=======
+>>>>>>> 8efb4b0 ([#1] 構成をブラッシュアップ)
+>>>>>>> c267039 (gpgキーを指定後再コミット)
 end note
 
 @enduml
