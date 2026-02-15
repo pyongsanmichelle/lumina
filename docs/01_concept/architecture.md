@@ -67,6 +67,7 @@
   - FE: Frontend
     - Nuxt.js
     - SSG（Static Site Generation）
+    - SPA
   - BFF: Backend for Frontend
     - Spring Web
     - Kotlin
@@ -85,16 +86,24 @@
   - 本番 / ステージング
     - AWS
       - VPC
-        - Public Subnet: ALB
-        - Private Subnet: ECS Tasks, RDS PostgreSQL
+        - Public Subnet
+          - ALB
+            - /api/* を ECS 上の BFF へ （リバースプロキシ）
+        - Private Subnet
+          - ECS Tasks
+            - BFF / BE / Batch
+          - RDS PostgreSQL
       - FE: CloudFront + S3
       - BFF: ECS（Fargate）
       - BE: ECS（Fargate）
       - DB: RDS
-      - Batch: EventBridge Scheduler
+      - Batch: EventBridge Scheduler → ECS RunTask（batchタスク定義起動）
       - Secrets Manager
+        - DB パスワード等を管理
       - SSM Parameter Store
+        - issuer-uri / audience / 各種設定
       - CloudWatch Logs / Metrics
+        - 監視
   - 開発
     - WSL2 + Docker（WEB / BFF / API / DB）
     - IDE
@@ -102,9 +111,18 @@
       - Dev Containers
 - 認証
   - OIDC
+    - Token
+      - SPA が保持し Authorization Header で API へ送信
   - Microsoft Entra ID
     - ※ Keycloak、Okta等に差し替え可能とする
+<<<<<<< HEAD
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
+=======
+- CI/CD
+  - GitHub Actions（ECR push → ECS 更新）
+
+
+>>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
 
 ---
 
@@ -156,11 +174,16 @@
 ## 3. OIDC（IdP差し替え可能設計）
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 - issuer-uri（OIDC Discovery URL）と audience を環境変数化
 - BFF / BE は Spring Security Resource Server として JWT 検証
 =======
 - issuer-uri（OIDC discovery URL）と audience を環境変数化
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
+=======
+- issuer-uri（OIDC Discovery URL）と audience を環境変数化
+- BFF / BE は Spring Security Resource Server として JWT 検証
+>>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
 - IdP 固有のクレーム（roles/groups/scpなど）はアプリ側でマッピング層を持つ
 - これにより Entra ID / Keycloak / Okta などを設定変更で切り替え可能とする
 

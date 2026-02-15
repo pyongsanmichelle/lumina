@@ -5,6 +5,7 @@ skinparam componentStyle rectangle
 skinparam defaultFontName "Noto Sans CJK JP"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 title AWS Architecture (Nuxt SSG/SPA + OIDC + ECS + RDS)
 
 rectangle "Users (Browser)" as user
@@ -43,52 +44,55 @@ user --> alb : HTTPS\nAuthorization: Bearer
 alb --> bff : route /api/*
 =======
 title AWS Architecture (SSRなし / CloudFront + S3 + ECS + RDS)
+=======
+title AWS Architecture (Nuxt SSG/SPA + OIDC + ECS + RDS)
+>>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
 
 rectangle "Users (Browser)" as user
+rectangle "OIDC IdP\n(Entra ID / Keycloak / Okta)" as idp
 
-rectangle "AWS Account (prod or stg)" as aws {
+rectangle "CloudFront\napp.example.com" as cf
+storage "S3\n(Nuxt static)" as s3
 
-  rectangle "CloudFront" as cf
-  storage "S3 (Nuxt SSG static)" as s3
-  [WAF (optional)] as waf
-
-  rectangle "VPC" as vpc {
-    rectangle "Public Subnets" as pub {
-      [ALB (API)] as alb
-    }
-
-    rectangle "Private Subnets" as priv {
-      rectangle "ECS Cluster (Fargate)" as ecs {
-        [BFF\nSpring Boot (Kotlin)\nREST] as bff
-        [Backend\nSpring Boot (Kotlin)] as be
-        [Batch Task\nSpring Batch\n(Scheduled)] as batch
-      }
-      database "RDS PostgreSQL" as rds
-    }
+rectangle "VPC" as vpc {
+  rectangle "Public Subnets" as pub {
+    [ALB\n/api/*] as alb
   }
-
-  [EventBridge Scheduler] as ev
-  [CloudWatch Logs/Metrics] as cw
-  [Secrets Manager] as secrets
-  [SSM Parameter Store] as ssm
-  [ECR] as ecr
-  rectangle "OIDC IdP\n(Entra ID / Keycloak / Okta)" as idp
+  rectangle "Private Subnets" as priv {
+    rectangle "ECS Cluster (Fargate)" as ecs {
+      [BFF\nSpring Boot Kotlin\nREST] as bff
+      [Backend\nSpring Boot Kotlin\nREST] as be
+      [Batch Task\nSpring Batch\nScheduled] as batch
+    }
+    database "RDS PostgreSQL" as rds
+  }
 }
 
-user --> cf : HTTPS\napp.example.com
-waf -up- cf
+[EventBridge Scheduler] as ev
+[CloudWatch] as cw
+[Secrets Manager] as secrets
+[SSM Parameter Store] as ssm
+[ECR] as ecr
+
+user --> cf : HTTPS\n/ (static) + /api/*
 cf --> s3 : Origin (static)
 cf --> alb : Origin (/api/*)
 
-user --> idp : OIDC login\n(Auth Code + PKCE)
+user --> idp : OIDC login\nAuth Code + PKCE
+user --> alb : HTTPS\nAuthorization: Bearer
 
+<<<<<<< HEAD
 alb --> bff : /api
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
+=======
+alb --> bff : route /api/*
+>>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
 bff --> be : internal REST
 be --> rds : SQL 5432
 batch --> rds : SQL 5432
 ev --> batch : RunTask schedule
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 bff ..> secrets
 be ..> secrets
@@ -99,21 +103,28 @@ batch ..> ssm
 bff ..> cw
 =======
 bff ..> secrets : read secrets
+=======
+bff ..> secrets
+>>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
 be ..> secrets
 batch ..> secrets
-
 bff ..> ssm
 be ..> ssm
 batch ..> ssm
+<<<<<<< HEAD
 
 bff ..> cw : logs/metrics
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
+=======
+bff ..> cw
+>>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
 be ..> cw
 batch ..> cw
 ecr ..> ecs : image pull
 
 note right of cf
 同一ドメインで
+<<<<<<< HEAD
 <<<<<<< HEAD
 - / は静的配信
 - /api は ALB → BFF
@@ -123,6 +134,11 @@ note right of cf
 - /api はALB→BFF
 にするとCORS/運用が楽
 >>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
+=======
+- / は静的配信
+- /api は ALB → BFF
+に統一するとCORS対応が容易
+>>>>>>> 5d99483 ([#1] 構成をブラッシュアップ)
 end note
 
 @enduml
