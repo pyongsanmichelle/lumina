@@ -1,4 +1,5 @@
 # Web業務システム構成案
+<<<<<<< HEAD
 
 ## 構想
 
@@ -58,6 +59,52 @@
   - GitHub Actions（ECR push → ECS 更新）
 
 
+=======
+
+## 構想
+
+- FE、BFF、BE、DB で責務分離
+  - FE: Frontend
+    - Nuxt.js
+    - SSG（Static Site Generation）
+  - BFF: Backend for Frontend
+    - Spring Web
+    - Kotlin
+    - Gradle
+  - BE: Backend
+    - Spring Boot
+    - Kotlin
+    - Gradle
+- Batch
+  - Spring Batch
+  - Kotlin
+- DB
+  - PostgreSQL
+  - Flyway
+- 環境
+  - 本番 / ステージング
+    - AWS
+      - VPC
+        - Public Subnet: ALB
+        - Private Subnet: ECS Tasks, RDS PostgreSQL
+      - FE: CloudFront + S3
+      - BFF: ECS（Fargate）
+      - BE: ECS（Fargate）
+      - DB: RDS
+      - Batch: EventBridge Scheduler
+      - Secrets Manager
+      - SSM Parameter Store
+      - CloudWatch Logs / Metrics
+  - 開発
+    - WSL2 + Docker（WEB / BFF / API / DB）
+    - IDE
+      - Visual Studio Code
+      - Dev Containers
+- 認証
+  - OIDC
+  - Microsoft Entra ID
+    - ※ Keycloak、Okta等に差し替え可能とする
+>>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
 
 ---
 
@@ -108,8 +155,12 @@
 
 ## 3. OIDC（IdP差し替え可能設計）
 
+<<<<<<< HEAD
 - issuer-uri（OIDC Discovery URL）と audience を環境変数化
 - BFF / BE は Spring Security Resource Server として JWT 検証
+=======
+- issuer-uri（OIDC discovery URL）と audience を環境変数化
+>>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
 - IdP 固有のクレーム（roles/groups/scpなど）はアプリ側でマッピング層を持つ
 - これにより Entra ID / Keycloak / Okta などを設定変更で切り替え可能とする
 

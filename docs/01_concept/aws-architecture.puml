@@ -4,6 +4,7 @@ skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam defaultFontName "Noto Sans CJK JP"
 
+<<<<<<< HEAD
 title AWS Architecture (Nuxt SSG/SPA + OIDC + ECS + RDS)
 
 rectangle "Users (Browser)" as user
@@ -40,11 +41,55 @@ user --> idp : OIDC login\nAuth Code + PKCE
 user --> alb : HTTPS\nAuthorization: Bearer
 
 alb --> bff : route /api/*
+=======
+title AWS Architecture (SSRなし / CloudFront + S3 + ECS + RDS)
+
+rectangle "Users (Browser)" as user
+
+rectangle "AWS Account (prod or stg)" as aws {
+
+  rectangle "CloudFront" as cf
+  storage "S3 (Nuxt SSG static)" as s3
+  [WAF (optional)] as waf
+
+  rectangle "VPC" as vpc {
+    rectangle "Public Subnets" as pub {
+      [ALB (API)] as alb
+    }
+
+    rectangle "Private Subnets" as priv {
+      rectangle "ECS Cluster (Fargate)" as ecs {
+        [BFF\nSpring Boot (Kotlin)\nREST] as bff
+        [Backend\nSpring Boot (Kotlin)] as be
+        [Batch Task\nSpring Batch\n(Scheduled)] as batch
+      }
+      database "RDS PostgreSQL" as rds
+    }
+  }
+
+  [EventBridge Scheduler] as ev
+  [CloudWatch Logs/Metrics] as cw
+  [Secrets Manager] as secrets
+  [SSM Parameter Store] as ssm
+  [ECR] as ecr
+  rectangle "OIDC IdP\n(Entra ID / Keycloak / Okta)" as idp
+}
+
+user --> cf : HTTPS\napp.example.com
+waf -up- cf
+cf --> s3 : Origin (static)
+cf --> alb : Origin (/api/*)
+
+user --> idp : OIDC login\n(Auth Code + PKCE)
+
+alb --> bff : /api
+>>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
 bff --> be : internal REST
 be --> rds : SQL 5432
 batch --> rds : SQL 5432
 ev --> batch : RunTask schedule
 
+<<<<<<< HEAD
 bff ..> secrets
 be ..> secrets
 batch ..> secrets
@@ -52,15 +97,32 @@ bff ..> ssm
 be ..> ssm
 batch ..> ssm
 bff ..> cw
+=======
+bff ..> secrets : read secrets
+be ..> secrets
+batch ..> secrets
+
+bff ..> ssm
+be ..> ssm
+batch ..> ssm
+
+bff ..> cw : logs/metrics
+>>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
 be ..> cw
 batch ..> cw
 ecr ..> ecs : image pull
 
 note right of cf
 同一ドメインで
+<<<<<<< HEAD
 - / は静的配信
 - /api は ALB → BFF
 に統一するとCORS対応が容易
+=======
+- / は静的(CloudFront+S3)
+- /api はALB→BFF
+にするとCORS/運用が楽
+>>>>>>> 78ff5b3 ([#1] 構成案をブラッシュアップ)
 end note
 
 @enduml
