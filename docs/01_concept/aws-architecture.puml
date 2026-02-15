@@ -1,5 +1,5 @@
-@startuml aws-architecture
 
+@startuml
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam defaultFontName "Noto Sans CJK JP"
