@@ -6,6 +6,9 @@ skinparam defaultFontName "Noto Sans CJK JP"
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> a7fac7e7b9ad1ce7a8e166d4d4f2904d168805d3
 title AWS Architecture (Nuxt SSG/SPA + OIDC + ECS + RDS)
 
 rectangle "Users (Browser)" as user
@@ -42,6 +45,7 @@ user --> idp : OIDC login\nAuth Code + PKCE
 user --> alb : HTTPS\nAuthorization: Bearer
 
 alb --> bff : route /api/*
+<<<<<<< HEAD
 =======
 title AWS Architecture (SSRなし / CloudFront + S3 + ECS + RDS)
 =======
@@ -87,6 +91,8 @@ alb --> bff : /api
 =======
 alb --> bff : route /api/*
 >>>>>>> 8efb4b0 ([#1] 構成をブラッシュアップ)
+=======
+>>>>>>> a7fac7e7b9ad1ce7a8e166d4d4f2904d168805d3
 bff --> be : internal REST
 be --> rds : SQL 5432
 batch --> rds : SQL 5432
@@ -94,6 +100,9 @@ ev --> batch : RunTask schedule
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> a7fac7e7b9ad1ce7a8e166d4d4f2904d168805d3
 bff ..> secrets
 be ..> secrets
 batch ..> secrets
@@ -126,6 +135,7 @@ note right of cf
 同一ドメインで
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 - / は静的配信
 - /api は ALB → BFF
 に統一するとCORS対応が容易
@@ -139,6 +149,11 @@ note right of cf
 - /api は ALB → BFF
 に統一するとCORS対応が容易
 >>>>>>> 8efb4b0 ([#1] 構成をブラッシュアップ)
+=======
+- / は静的配信
+- /api は ALB → BFF
+に統一するとCORS対応が容易
+>>>>>>> a7fac7e7b9ad1ce7a8e166d4d4f2904d168805d3
 end note
 
 @enduml
