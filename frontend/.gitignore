@@ -1,0 +1,22 @@
+node_modules
+.nuxt
+.output
+.DS_Store
+*.pem
+.env
+.env.*
+!.env.local
+!**/.env
+!**/.env.*
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.npm
+.npmrc
+.pnpm-store
+.yarn/
+# coverage reports
+coverage/
