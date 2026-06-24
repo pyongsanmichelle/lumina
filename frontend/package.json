@@ -1,0 +1,28 @@
+{
+  "name": "frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "vitest run --coverage && nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "generate:api": "openapi-typescript ../api-spec.yaml -o ./app/types/api.d.ts"
+  },
+  "dependencies": {
+    "nuxt": "^4.4.8",
+    "vue": "^3.5.35",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@nuxt/test-utils": "^3.15.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^15.11.7",
+    "openapi-typescript": "^7.4.4",
+    "vitest": "^2.1.8"
+  }
+}
