@@ -16,3 +16,29 @@ services:
     environment:
       - NODE_ENV=development
     restart: always
+
+  bff:
+    image: eclipse-temurin:21-jdk-jammy
+    container_name: spring_bff
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./bff:/app/bff
+    working_dir: /app/bff
+    command: ./gradlew bootRun --continuous
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    restart: always
+
+  api:
+    image: eclipse-temurin:21-jdk-jammy
+    container_name: spring_api
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./api:/app/api
+    working_dir: /app/api
+    command: ./gradlew bootRun --continuous
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    restart: always
