@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## 1. 技術スタック
 - **フロントエンド**: Nuxt.js (v4.4.7 / TypeScript)
-- **BFF**: Spring Boot (v4.0.6 / Kotlin 2.1.10 / Gradle v9.6.0(Kotlin DSL: build.gradle.kts)  / WebFlux+コルーチンによる非同期リアクティブ構成)
+- **BFF**: Spring Boot (v4.0.6 / Kotlin 2.4.0 / Gradle v9.6.0(Kotlin DSL: build.gradle.kts)  / WebFlux+コルーチンによる非同期リアクティブ構成)
 - **API**: Spring Boot (v4.0.6 / Java 25 / Gradle v9.6.0(Groovy DSL: build.gradle) / 4層クリーンアーキテクチャ構成)
 - **データベース**: PostgreSQL (v18) + Flyway (v12.8.1)
 - **認証基盤**: Keycloak (OIDC連携)
