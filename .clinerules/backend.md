@@ -18,12 +18,12 @@ globs: "api/**/*, bff/**/*"
   - `integration/`: Client（APIを叩くHTTPクライアント：RestClient/WebClient）、config/。
 
 ## 3. 実装ルール
-- Lombok (`@Value`, `@Builder`, `@RequiredArgsConstructor`)、Java 25の `record` を積極活用する。
+- API（Java）側は Lombok (@Value, @Builder, @RequiredArgsConstructor) や Java 25 の record を、BFF（Kotlin）側Kotlin の data class を積極活用する。
 - 層間のデータ移送には **MapStruct** を使用し、手動の詰め替え（setter連打）は禁止とする。
 - DBスキーマ変更は Flyway (`api/src/main/resources/db/migration/`) で管理する。
 
 ## 4. テストコード（JUnit 5 + Mockito + AssertJ）
-- `src/test/java/` 配下に対称に配置。
+- API は `src/test/java/`、BFF は `src/test/kotlin/` 配下に対称に配置。
 - Domain層は純粋なユニットテスト（モックなし）。Usecase層は `@ExtendWith(MockitoExtension.class)` によるモックテスト（高速化）。
 - テストメソッド名は日本語で `テスト対象の機能_状態_期待する結果` とし、`@DisplayName` を付与する。
 

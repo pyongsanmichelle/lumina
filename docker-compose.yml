@@ -18,7 +18,7 @@ services:
     restart: always
 
   bff:
-    image: eclipse-temurin:21-jdk-jammy
+    image: eclipse-temurin:25-jdk-jammy
     container_name: spring_bff
     ports:
       - "8080:8080"
@@ -31,7 +31,7 @@ services:
     restart: always
 
   api:
-    image: eclipse-temurin:21-jdk-jammy
+    image: eclipse-temurin:25-jdk-jammy
     container_name: spring_api
     ports:
       - "8081:8081"
