@@ -1,7 +1,7 @@
 ---
 name: 📝 ドキュメント整備 (Documentation)
 about: 設計書、README、各種テンプレートの作成・更新
-title: 'docs '
+title: 'docs: '
 labels: 'documentation'
 assignees: ''
 ---
