@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:18-alpine
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    environment:
+      - POSTGRES_DB=${DB_NAME:-lumina}
+      - POSTGRES_USER=${DB_USER:-luminar}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-secure_dev_pass_2026}
+    command: ["postgres", "-c", "timezone=Asia/Tokyo"]
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-luminar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   frontend:
     build:
       context: .
@@ -41,4 +60,16 @@ services:
     command: ./gradlew bootRun --continuous
     environment:
       - SPRING_PROFILES_ACTIVE=dev
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=lumina
+      - DB_SCHEMA=general
+      - DB_USER=luminar
+      - DB_PASSWORD=secure_dev_pass_2026
+    depends_on:
+      db:
+        condition: service_healthy
     restart: always
+
+volumes:
+  postgres_data:
