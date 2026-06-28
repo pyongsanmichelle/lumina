@@ -6,7 +6,7 @@ import java.util.Map;
 
 @RestController
 public class HelloController {
-    @GetMapping("/api/hello")
+    @GetMapping("/hello")
     public Map<String, String> hello() {
         return Map.of("message", "Hello from API");
     }

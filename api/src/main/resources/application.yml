@@ -1,6 +1,9 @@
 spring:
   application:
     name: api
+  mvc:
+    pathmatch:
+      base-path: /api/v1
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lumina}?currentSchema=${DB_SCHEMA:general}
     username: ${DB_USER:luminar}
@@ -19,6 +22,12 @@ spring:
     schemas: ${DB_SCHEMA:general}
     default-schema: ${DB_SCHEMA:general}
     baseline-on-migrate: true
+    callbacks:
+      - com.example.api.infrastructure.config.AfterMigrateCallback
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
 
 server:
   port: 8081
