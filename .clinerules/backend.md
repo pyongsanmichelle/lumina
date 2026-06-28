@@ -18,9 +18,27 @@ globs: "api/**/*, bff/**/*"
   - `integration/`: Client（APIを叩くHTTPクライアント：RestClient/WebClient）、config/。
 
 ## 3. 実装ルール
-- API（Java）側は Lombok (@Value, @Builder, @RequiredArgsConstructor) や Java 25 の record を、BFF（Kotlin）側Kotlin の data class を積極活用する。
+- API（Java）側は Lombok (@Value, @Builder, @RequiredArgsConstructor) や Java 25 の record を、BFF（Kotlin）側は Kotlin の data class を積極活用する。
 - 層間のデータ移送には **MapStruct** を使用し、手動の詰め替え（setter連打）は禁止とする。
 - DBスキーマ変更は Flyway (`api/src/main/resources/db/migration/`) で管理する。
+
+### 3.1. 楽観ロックとステータス（状態）管理
+- **楽観ロック**: データの同時更新衝突を防ぐため、全エンティティに `version` (BIGINT) カラムを設け、JPAの `@Version` アノテーションを付与して楽観ロックを有効化すること。衝突時は `412 Precondition Failed` を返却する。
+- **ステータス管理**: データの有効・無効・削除等の状態は `status` カラム (VARCHAR) で管理し、初期値は `'ENABLED'` とする。
+
+### 3.2. メッセージ管理・多言語化（i18n）原則
+- **ハードコーディングの禁止**: バックエンドソースコード（Java）内へのメッセージ文字列のハードコーディングは完全に禁止とする。
+- **messages.propertiesでの集中管理**: すべての文言（正常・異常含む）は、プロパティファイル（例: `messages_ja.properties`）にて集中管理すること。
+- **命名規則の遵守**: キーは `[種類].[ドメイン/機能].[項目名（任意）].[識別子]`（種類: `info`, `error`, `valid`）の階層構造で命名すること。
+- クライアント（BFF）からの `Accept-Language` リクエストヘッダーに応じて、Springのi18n機能（`LocaleContextHolder`）により適切な言語メッセージを動的に返却すること。
+
+### 3.3. グローバル例外ハンドリング（BFF連携）
+- `presentation/` 層の `GlobalExceptionHandler`（`@RestControllerAdvice`）にて例外を型安全にキャッチし、[例外・エラーハンドリング定義書(error_guideline.md)] に従った一律のJSON構造に変換すること。
+- **エラーフォーマットの分類**:
+  - 単項目バリデーション・型不一致（400） ➡️ `fieldErrors` 配列へ格納
+  - 相関バリデーション（400） ➡️ `globalErrors` および関連する `fieldErrors` へ格納
+  - 業務チェック違反（422） ➡️ `globalErrors` へ文脈に応じたコード（`code`）とメッセージを格納
+  - 楽観ロックエラー（412） ➡️ `globalErrors` へ `OptimisticLockException` コードとメッセージを格納
 
 ## 4. テストコード（JUnit 5 + Mockito + AssertJ）
 - API は `src/test/java/`、BFF は `src/test/kotlin/` 配下に対称に配置。
