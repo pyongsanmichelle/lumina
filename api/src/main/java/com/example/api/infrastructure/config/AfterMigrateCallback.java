@@ -1,6 +1,6 @@
 package com.example.api.infrastructure.config;
 
-import org.flywaydb.core.api.callback.BaseFlywayCallback;
+import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.callback.Context;
 import org.flywaydb.core.api.callback.Event;
 import org.springframework.core.env.Environment;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * 実際のSQL実行は Flyway が afterMigrate.sql を自動的に実行する。
  */
 @Component
-public class AfterMigrateCallback extends BaseFlywayCallback {
+public class AfterMigrateCallback implements Callback {
 
     private final Environment environment;
 
@@ -30,6 +30,22 @@ public class AfterMigrateCallback extends BaseFlywayCallback {
     @Override
     public boolean supports(Event event, Context context) {
         return event == Event.AFTER_MIGRATE && isDevProfile();
+    }
+
+    /**
+     * コールバック名を返却（Flyway 12.x の Callback インターフェースで必須）
+     */
+    @Override
+    public String getCallbackName() {
+        return getClass().getSimpleName();
+    }
+
+    /**
+     * トランザクション内でハンドリング可能か判定（Flyway 12.x で必須）
+     */
+    @Override
+    public boolean canHandleInTransaction(Event event, Context context) {
+        return supports(event, context);
     }
 
     /**
