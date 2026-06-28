@@ -1,9 +1,6 @@
 spring:
   application:
     name: api
-  mvc:
-    pathmatch:
-      base-path: /api/v1
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lumina}?currentSchema=${DB_SCHEMA:general}
     username: ${DB_USER:luminar}
@@ -31,3 +28,5 @@ spring:
 
 server:
   port: 8081
+  servlet:
+    context-path: /api/v1

@@ -29,6 +29,13 @@ public abstract class UserMapper {
     public abstract List<UserResponse> toResponseList(List<User> users);
 
     /**
+     * OffsetDateTimeからStringへの型変換用メソッド
+     */
+    public String map(OffsetDateTime value) {
+        return value != null ? value.toString() : null;
+    }
+
+    /**
      * マッピング後の処理：OffsetDateTimeをStringに変換
      */
     @AfterMapping

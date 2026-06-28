@@ -23,7 +23,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * グローバル例外ハンドラー
@@ -49,7 +48,7 @@ public class GlobalExceptionHandler {
                 .rejectedValue(error.getRejectedValue())
                 .message(getMessage(error.getDefaultMessage()))
                 .build())
-            .collect(Collectors.toList());
+            .toList();
 
         List<GlobalErrorDetail> globalErrors = new ArrayList<>();
         

@@ -2,7 +2,7 @@ package com.example.api.presentation.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * エラーレスポンスの基本形式
  */
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
