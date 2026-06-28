@@ -3,6 +3,8 @@ package com.example.api.domain;
 import java.time.OffsetDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -61,6 +63,20 @@ public class User {
      */
     @Column(name = "timezone", nullable = false, length = 50)
     private String timezone = "Asia/Tokyo";
+
+    /**
+     * バージョン（楽観ロック用）
+     */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
+    /**
+     * ステータス（ENABLED: 有効, DISABLED: 無効, DELETED: 削除）
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 50)
+    private UserStatus status = UserStatus.ENABLED;
 
     /**
      * 作成者（ユーザーID）
