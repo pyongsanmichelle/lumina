@@ -9,7 +9,7 @@ globs: "api/**/*, bff/**/*"
   - `domain/`: ビジネスルール、ドメインモデル（自己カプセル化バリデーション内包）、Repositoryインターフェース。他層への依存禁止。
   - `usecase/`: アプリケーション固有ロジック、Service（重複チェック等のビジネスバリデーションを実行）、DTO。
   - `presentation/`: Controller（`@Valid`チェック）、request/、response/、GlobalExceptionHandler。
-    - **ルーティング・バージョン管理**: Controller側の `@RequestMapping` に `/api/v1` などの**バージョンやベースパスを直接記述（ハードコード）することは完全に禁止**とする。必ず `application.yml` の `spring.mvc.pathmatch.base-path` で一元管理し、Controller側は `@RequestMapping("/users")` のようにリソース名のみを記述すること。
+    - **ルーティング・バージョン管理**: Controller側の `@RequestMapping` に `/api/v1` などの**バージョンやベースパスを直接記述（ハードコード）することは完全に禁止**とする。必ず `application.yml` の `server.servlet.context-path` で一元管理し、Controller側は `@RequestMapping("/users")` のようにリソース名のみを記述すること。
   - `infrastructure/`: Repository実装（Spring Data JPA等）、Entity、config/。
 
 ## 2. BFFサーバー（bff/）の構造

@@ -1,8 +1,9 @@
 package com.example.api.usecase;
 
 import com.example.api.domain.User;
+import com.example.api.domain.UserRepository;
+import com.example.api.domain.UserSearchCondition;
 import com.example.api.domain.UserStatus;
-import com.example.api.infrastructure.UserRepository;
 import com.example.api.usecase.exception.ResourceNotFoundException;
 import com.example.api.usecase.mapper.UserMapper;
 import com.example.api.presentation.request.CreateUserRequest;
@@ -34,23 +35,8 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<UserResponse> searchUsers(String name, String email) {
-        List<User> users;
-        
-        if (name != null && !name.isEmpty() && email != null && !email.isEmpty()) {
-            // 名前とメールの両方で検索
-            users = userRepository.findByNameContainingAndEmailStartingWithAndStatus(
-                name, email, UserStatus.ENABLED);
-        } else if (name != null && !name.isEmpty()) {
-            // 名前で部分一致検索
-            users = userRepository.findByNameContainingAndStatus(name, UserStatus.ENABLED);
-        } else if (email != null && !email.isEmpty()) {
-            // メールで前方一致検索
-            users = userRepository.findByEmailStartingWithAndStatus(email, UserStatus.ENABLED);
-        } else {
-            // 全件取得（有効なユーザーのみ）
-            users = userRepository.findByStatus(UserStatus.ENABLED);
-        }
-        
+        UserSearchCondition condition = new UserSearchCondition(name, email, UserStatus.ENABLED);
+        List<User> users = userRepository.search(condition);
         return userMapper.toResponseList(users);
     }
 

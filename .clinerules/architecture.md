@@ -25,3 +25,11 @@ alwaysApply: true
 - **API仕様の単一真実源（Single Source of Truth）**: APIサーバー（`api/`）が提供するすべてのエンドポイントは、OpenAPI 3.0/3.1 形式の定義ファイル（`api-spec.yaml` など）で管理する。
 - **WireMockによる並行開発**: APIの実装が未完了であっても、フロントエンド・BFFの開発をブロックさせないため、`api-spec.yaml` から WireMock（Dockerコンテナ）用のスタブ（モック定義）を自動生成、または手動配置し、独立して開発・検証ができる環境を `docker/` 内に構築すること。
 - **通信フローのシミュレーション**: BFFからAPI、NuxtからBFFの通信テストにおいて、外部依存を排除するためにWireMockを積極的に活用すること。
+
+## 5. コマンド実行・動作検証ポリシー（🚨最重要）
+- ビルド・テスト・アプリケーション起動など、すべての動作検証は **WSL2上のDocker Container（Docker Compose）内** でのみ実行すること。
+- ホストOS上で直接 `./gradlew`, `npm run`, `npx` 等の実行や、JDK/Node.jsのバージョン探索（`find /usr/lib/jvm` 等）を行うことは禁止する。
+- コマンド実行時は必ず `docker compose exec <service>` または `docker compose run --rm <service>` の形式を用いること。
+  例: `docker compose exec api ./gradlew build`
+- 対象のDocker Composeサービスやコンテナが未起動の場合は、先に `docker compose up -d --build` で起動してから検証コマンドを実行すること。
+- ローカル環境にインストールされているJDK/Node.jsのバージョンを前提にしたコマンドを生成・実行してはならない（バージョンはコンテナ内のものに完全に依存させる）。

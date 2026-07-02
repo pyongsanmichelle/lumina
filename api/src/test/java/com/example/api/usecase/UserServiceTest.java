@@ -1,8 +1,9 @@
 package com.example.api.usecase;
 
 import com.example.api.domain.User;
+import com.example.api.domain.UserRepository;
+import com.example.api.domain.UserSearchCondition;
 import com.example.api.domain.UserStatus;
-import com.example.api.infrastructure.UserRepository;
 import com.example.api.usecase.exception.ResourceNotFoundException;
 import com.example.api.usecase.mapper.UserMapper;
 import com.example.api.presentation.request.CreateUserRequest;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +47,7 @@ class UserServiceTest {
         User user1 = createUser(1L, "sso-user-uuid-0001", "admin@example.com", "管理者", "Asia/Tokyo", 0L, UserStatus.ENABLED);
         User user2 = createUser(2L, "sso-user-uuid-0002", "user@example.com", "一般ユーザー", "Asia/Tokyo", 0L, UserStatus.ENABLED);
         
-        when(userRepository.findByStatus(UserStatus.ENABLED)).thenReturn(Arrays.asList(user1, user2));
+        when(userRepository.search(any(UserSearchCondition.class))).thenReturn(Arrays.asList(user1, user2));
         when(userMapper.toResponseList(any())).thenReturn(Arrays.asList(createUserResponse(1L), createUserResponse(2L)));
 
         // 実行
@@ -53,7 +55,11 @@ class UserServiceTest {
 
         // 検証
         assertThat(result).hasSize(2);
-        verify(userRepository).findByStatus(UserStatus.ENABLED);
+        verify(userRepository).search(argThat(condition -> 
+            condition.name() == null && 
+            condition.email() == null && 
+            condition.status() == UserStatus.ENABLED
+        ));
         verify(userMapper).toResponseList(any());
     }
 
@@ -63,7 +69,7 @@ class UserServiceTest {
         // 準備
         User user = createUser(1L, "sso-user-uuid-0001", "admin@example.com", "管理者", "Asia/Tokyo", 0L, UserStatus.ENABLED);
         
-        when(userRepository.findByNameContainingAndStatus("管理者", UserStatus.ENABLED)).thenReturn(Arrays.asList(user));
+        when(userRepository.search(any(UserSearchCondition.class))).thenReturn(Arrays.asList(user));
         when(userMapper.toResponseList(any())).thenReturn(Arrays.asList(createUserResponse(1L)));
 
         // 実行
@@ -71,7 +77,11 @@ class UserServiceTest {
 
         // 検証
         assertThat(result).hasSize(1);
-        verify(userRepository).findByNameContainingAndStatus("管理者", UserStatus.ENABLED);
+        verify(userRepository).search(argThat(condition -> 
+            "管理者".equals(condition.name()) && 
+            condition.email() == null && 
+            condition.status() == UserStatus.ENABLED
+        ));
     }
 
     @Test
@@ -80,7 +90,7 @@ class UserServiceTest {
         // 準備
         User user = createUser(1L, "sso-user-uuid-0001", "admin@example.com", "管理者", "Asia/Tokyo", 0L, UserStatus.ENABLED);
         
-        when(userRepository.findByEmailStartingWithAndStatus("admin", UserStatus.ENABLED)).thenReturn(Arrays.asList(user));
+        when(userRepository.search(any(UserSearchCondition.class))).thenReturn(Arrays.asList(user));
         when(userMapper.toResponseList(any())).thenReturn(Arrays.asList(createUserResponse(1L)));
 
         // 実行
@@ -88,7 +98,11 @@ class UserServiceTest {
 
         // 検証
         assertThat(result).hasSize(1);
-        verify(userRepository).findByEmailStartingWithAndStatus("admin", UserStatus.ENABLED);
+        verify(userRepository).search(argThat(condition -> 
+            condition.name() == null && 
+            "admin".equals(condition.email()) && 
+            condition.status() == UserStatus.ENABLED
+        ));
     }
 
     @Test
@@ -97,8 +111,7 @@ class UserServiceTest {
         // 準備
         User user = createUser(1L, "sso-user-uuid-0001", "admin@example.com", "管理者", "Asia/Tokyo", 0L, UserStatus.ENABLED);
         
-        when(userRepository.findByNameContainingAndEmailStartingWithAndStatus("管理者", "admin", UserStatus.ENABLED))
-            .thenReturn(Arrays.asList(user));
+        when(userRepository.search(any(UserSearchCondition.class))).thenReturn(Arrays.asList(user));
         when(userMapper.toResponseList(any())).thenReturn(Arrays.asList(createUserResponse(1L)));
 
         // 実行
@@ -106,7 +119,11 @@ class UserServiceTest {
 
         // 検証
         assertThat(result).hasSize(1);
-        verify(userRepository).findByNameContainingAndEmailStartingWithAndStatus("管理者", "admin", UserStatus.ENABLED);
+        verify(userRepository).search(argThat(condition -> 
+            "管理者".equals(condition.name()) && 
+            "admin".equals(condition.email()) && 
+            condition.status() == UserStatus.ENABLED
+        ));
     }
 
     @Test
