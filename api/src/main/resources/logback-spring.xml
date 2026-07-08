@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Spring Boot のアプリケーション名を service_name として利用 -->
+    <springProperty scope="context" name="springAppName" source="spring.application.name" defaultValue="api"/>
+
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- service_name をカスタムフィールドとして追加 -->
+            <customFields>{"service_name":"${springAppName}"}</customFields>
+
+            <!-- MDC から特定のキーのみを含める -->
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+
+            <!-- タイムゾーンの指定 -->
+            <timeZone>Asia/Tokyo</timeZone>
+
+            <!-- スタックトレースを含める -->
+            <includeCallerData>false</includeCallerData>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+</configuration>
