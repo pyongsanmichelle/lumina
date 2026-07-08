@@ -25,6 +25,11 @@ public interface UserRepository {
     <S extends User> S save(S user);
 
     /**
+     * ユーザーを保存し、即座にDBにフラッシュする
+     */
+    <S extends User> S saveAndFlush(S user);
+
+    /**
      * idp_subjectの存在チェック
      */
     boolean existsByIdpSubject(String idpSubject);

@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Transactional
 @Rollback(true)
-@Import(UserRepositoryImpl.class)
 @DisplayName("UserRepositoryImplのテスト")
 class UserRepositoryImplTest {
 
@@ -33,6 +32,8 @@ class UserRepositoryImplTest {
 
     @BeforeEach
     void setUp() {
+        // 開発に利用する既存データをクリア
+        entityManager.createNativeQuery("TRUNCATE TABLE users").executeUpdate();
         // テストデータをクリア
         entityManager.clear();
     }
@@ -96,7 +97,7 @@ class UserRepositoryImplTest {
         // 実行
         UserSearchCondition condition = new UserSearchCondition(null, "test1", null);
         List<User> result = userRepository.search(condition);
-
+        
         // 検証
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getEmail()).isEqualTo("test1@example.com");
@@ -152,8 +153,8 @@ class UserRepositoryImplTest {
     @DisplayName("search_大文字小文字を区別しない_部分一致検索ができる")
     void search_大文字小文字を区別しない_部分一致検索ができる() {
         // 準備
-        User user1 = createUser("test-uuid-001", "test1@example.com", "管理者ユーザー", "Asia/Tokyo", UserStatus.ENABLED);
-        User user2 = createUser("test-uuid-002", "test2@example.com", "一般ユーザー", "Asia/Tokyo", UserStatus.ENABLED);
+        User user1 = createUser("test-uuid-001", "test1@example.com", "adminuser", "Asia/Tokyo", UserStatus.ENABLED);
+        User user2 = createUser("test-uuid-002", "test2@example.com", "publicuser", "Asia/Tokyo", UserStatus.ENABLED);
 
         entityManager.persist(user1);
         entityManager.persist(user2);
@@ -162,10 +163,10 @@ class UserRepositoryImplTest {
         // 実行（大文字で検索）
         UserSearchCondition condition = new UserSearchCondition("ADMIN", null, null);
         List<User> result = userRepository.search(condition);
-
+        
         // 検証
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("管理者ユーザー");
+        assertThat(result.get(0).getName()).isEqualTo("adminuser");
     }
 
     // ヘルパーメソッド
@@ -176,6 +177,7 @@ class UserRepositoryImplTest {
         user.setName(name);
         user.setTimezone(timezone);
         user.setStatus(status);
+        user.setVersion(0L);
         user.setCreatedBy(0L);
         user.setCreatedAt(OffsetDateTime.now());
         user.setUpdatedBy(0L);

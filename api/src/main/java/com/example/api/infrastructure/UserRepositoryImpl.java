@@ -50,6 +50,14 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     /**
+     * ユーザーを保存し、即座にDBにフラッシュする
+     */
+    @Override
+    public <S extends User> S saveAndFlush(S user) {
+        return userJpaRepository.saveAndFlush(user);
+    }
+
+    /**
      * idp_subjectの存在チェック
      */
     @Override

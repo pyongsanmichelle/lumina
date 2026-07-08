@@ -2,26 +2,23 @@ package com.example.api.presentation;
 
 import com.example.api.domain.UserStatus;
 import com.example.api.domain.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.Rollback;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@Transactional
-@Rollback(false)
 @DisplayName("UserControllerの統合テスト")
 class UserControllerIntegrationTest {
 
@@ -29,54 +26,61 @@ class UserControllerIntegrationTest {
     private WebApplicationContext webApplicationContext;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private UserRepository userRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private JdbcTemplate jdbcTemplate;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        // テストデータをクリア
-        userRepository.deleteAll();
-        
+        // テストデータをクリアし、IDENTITY採番をリセット
+        // DELETEではIDENTITYの採番がリセットされないため、TRUNCATE RESTART IDENTITYを使用する
+        jdbcTemplate.execute("TRUNCATE TABLE general.users RESTART IDENTITY CASCADE");
+
         // MockMvcをセットアップ
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        // MOCK環境ではcontext-path(/api/v1)は適用されないため、
+        // Controllerの@RequestMappingに指定されたパスそのものでアクセスする
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+            .alwaysDo(print())
+            .build();
     }
 
     @Test
     @DisplayName("CRUD_正常系_一連の操作が成功する")
     void CRUD_正常系_一連の操作が成功する() throws Exception {
         // 1. ユーザー登録
+        // Jacksonはデフォルトでキャメルケースを期待するため、
+        // JSONキーはJavaフィールド名（キャメルケース）に合わせる
         String createRequest = """
             {
-                "idp_subject": "sso-user-uuid-0001",
+                "idpSubject": "sso-user-uuid-0001",
                 "email": "test@example.com",
                 "name": "テストユーザー",
                 "timezone": "Asia/Tokyo"
             }
             """;
 
-        mockMvc.perform(post("/api/v1/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").exists())
-            .andExpect(jsonPath("$.idp_subject").value("sso-user-uuid-0001"))
+            .andExpect(jsonPath("$.idpSubject").value("sso-user-uuid-0001"))
             .andExpect(jsonPath("$.email").value("test@example.com"))
             .andExpect(jsonPath("$.name").value("テストユーザー"))
             .andExpect(jsonPath("$.version").value(0))
             .andExpect(jsonPath("$.status").value(UserStatus.ENABLED.name()));
 
         // 2. ユーザー検索
-        mockMvc.perform(get("/api/v1/users"))
+        mockMvc.perform(get("/users"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
             .andExpect(jsonPath("$[0].email").value("test@example.com"));
 
         // 3. ユーザー個別取得
-        mockMvc.perform(get("/api/v1/users/1"))
+        mockMvc.perform(get("/users/1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.name").value("テストユーザー"));
@@ -90,7 +94,7 @@ class UserControllerIntegrationTest {
             }
             """;
 
-        mockMvc.perform(put("/api/v1/users/1")
+        mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateRequest))
             .andExpect(status().isOk())
@@ -99,11 +103,11 @@ class UserControllerIntegrationTest {
             .andExpect(jsonPath("$.version").value(1));
 
         // 5. ユーザー削除
-        mockMvc.perform(delete("/api/v1/users/1"))
+        mockMvc.perform(delete("/users/1"))
             .andExpect(status().isNoContent());
 
         // 6. 削除確認（検索結果に含まれない）
-        mockMvc.perform(get("/api/v1/users"))
+        mockMvc.perform(get("/users"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -113,13 +117,13 @@ class UserControllerIntegrationTest {
     void バリデーションエラー_必須項目漏れで400が返却される() throws Exception {
         String createRequest = """
             {
-                "idp_subject": "",
+                "idpSubject": "",
                 "email": "",
                 "name": ""
             }
             """;
 
-        mockMvc.perform(post("/api/v1/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest))
             .andExpect(status().isBadRequest())
@@ -140,7 +144,7 @@ class UserControllerIntegrationTest {
             }
             """;
 
-        mockMvc.perform(put("/api/v1/users/1")
+        mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateRequest))
             .andExpect(status().isBadRequest())
@@ -156,14 +160,14 @@ class UserControllerIntegrationTest {
         // 事前にユーザーを作成
         String createRequest = """
             {
-                "idp_subject": "sso-user-uuid-0001",
+                "idpSubject": "sso-user-uuid-0001",
                 "email": "test@example.com",
                 "name": "テストユーザー",
                 "timezone": "Asia/Tokyo"
             }
             """;
 
-        mockMvc.perform(post("/api/v1/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest))
             .andExpect(status().isCreated());
@@ -177,8 +181,9 @@ class UserControllerIntegrationTest {
             }
             """;
 
-        mockMvc.perform(put("/api/v1/users/1")
+        mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Accept-Language", "ja")
                 .content(updateRequest))
             .andExpect(status().isPreconditionFailed())
             .andExpect(jsonPath("$.status").value(412))
@@ -194,14 +199,14 @@ class UserControllerIntegrationTest {
         // 1人目のユーザーを作成
         String createRequest1 = """
             {
-                "idp_subject": "sso-user-uuid-0001",
+                "idpSubject": "sso-user-uuid-0001",
                 "email": "test@example.com",
                 "name": "テストユーザー1",
                 "timezone": "Asia/Tokyo"
             }
             """;
 
-        mockMvc.perform(post("/api/v1/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest1))
             .andExpect(status().isCreated());
@@ -209,14 +214,14 @@ class UserControllerIntegrationTest {
         // 同じメールで2人目を作成
         String createRequest2 = """
             {
-                "idp_subject": "sso-user-uuid-0002",
+                "idpSubject": "sso-user-uuid-0002",
                 "email": "test@example.com",
                 "name": "テストユーザー2",
                 "timezone": "Asia/Tokyo"
             }
             """;
 
-        mockMvc.perform(post("/api/v1/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest2))
             .andExpect(status().isConflict())
@@ -230,13 +235,13 @@ class UserControllerIntegrationTest {
     void 多言語化_日本語ヘッダーで日本語メッセージが返却される() throws Exception {
         String createRequest = """
             {
-                "idp_subject": "",
+                "idpSubject": "",
                 "email": "test@example.com",
                 "name": "テストユーザー"
             }
             """;
 
-        mockMvc.perform(post("/api/v1/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Accept-Language", "ja")
                 .content(createRequest))
@@ -252,7 +257,7 @@ class UserControllerIntegrationTest {
         createTestUser("sso-user-uuid-0002", "user@example.com", "一般ユーザー");
 
         // 名前で検索
-        mockMvc.perform(get("/api/v1/users")
+        mockMvc.perform(get("/users")
                 .param("name", "管理者"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
@@ -267,7 +272,7 @@ class UserControllerIntegrationTest {
         createTestUser("sso-user-uuid-0002", "user@example.com", "一般ユーザー");
 
         // メールで前方一致検索
-        mockMvc.perform(get("/api/v1/users")
+        mockMvc.perform(get("/users")
                 .param("email", "admin"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
@@ -277,7 +282,7 @@ class UserControllerIntegrationTest {
     @Test
     @DisplayName("存在しないユーザー取得_404が返却される")
     void 存在しないユーザー取得_404が返却される() throws Exception {
-        mockMvc.perform(get("/api/v1/users/999"))
+        mockMvc.perform(get("/users/999"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.status").value(404))
             .andExpect(jsonPath("$.globalErrors", hasSize(1)))
@@ -286,16 +291,14 @@ class UserControllerIntegrationTest {
 
     // ヘルパーメソッド
     private void createTestUser(String idpSubject, String email, String name) throws Exception {
-        String request = String.format("""
-            {
-                "idp_subject": "%s",
-                "email": "%s",
-                "name": "%s",
-                "timezone": "Asia/Tokyo"
-            }
-            """, idpSubject, email, name);
+        // String.format + テキストブロックはフォーマットが正しく適用されないため、
+        // 直接文字列連結を使用する
+        String request = "{\"idpSubject\":\"" + idpSubject
+            + "\",\"email\":\"" + email
+            + "\",\"name\":\"" + name
+            + "\",\"timezone\":\"Asia/Tokyo\"}";
 
-        mockMvc.perform(post("/api/v1/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
             .andExpect(status().isCreated());

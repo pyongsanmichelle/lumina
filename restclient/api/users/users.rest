@@ -1,0 +1,5 @@
+GET http://localhost:8081/api/v1/users
+    ?name=Test
+    &email=test@example.com
+Accept: application/json
+Content-Type: application/json

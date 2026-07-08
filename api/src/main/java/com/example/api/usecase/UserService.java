@@ -102,7 +102,8 @@ public class UserService {
         user.setUpdatedAt(OffsetDateTime.now());
         // versionはJPAの@Versionにより自動インクリメント
 
-        User updatedUser = userRepository.save(user);
+        // saveAndFlushを使用して即座にDBに反映し、@Versionによるインクリメントを確定させる
+        User updatedUser = userRepository.saveAndFlush(user);
         return userMapper.toResponse(updatedUser);
     }
 

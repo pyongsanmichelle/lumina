@@ -36,19 +36,39 @@ dependencies {
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	
+	// Karate
+	testImplementation 'io.karatelabs:karate-junit5:1.5.2'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	testLogging {
+			// 失敗したテストの例外メッセージとスタックトレースをコンソールに出力
+			exceptionFormat = 'full'
+			events = ["failed"] // または "passed", "skipped", "failed"
+		}
 	finalizedBy jacocoTestReport
 }
 
+task karateTest(type: Test) {
+	description = 'Runs Karate tests'
+	group = 'verification'
+	useJUnitPlatform()
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	systemProperty 'karate.env', System.getProperty('karate.env', 'dev')
+	// JaCoCoの計測対象外とする
+	jacoco.enabled = false
+}
+
 jacoco {
-	toolVersion = "0.8.11"
+	toolVersion = "0.8.15"
 }
 
 jacocoTestReport {
 	dependsOn test
+	mustRunAfter tasks.named('test')
 	reports {
 		xml.required = true
 		html.required = true

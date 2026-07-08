@@ -243,7 +243,7 @@ class UserServiceTest {
         User updatedUser = createUser(1L, "sso-user-uuid-0001", "admin@example.com", "更新後のユーザー名", "America/New_York", 1L, UserStatus.ENABLED);
         
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(updatedUser);
         when(userMapper.toResponse(updatedUser)).thenReturn(createUserResponse(1L, "更新後のユーザー名", "America/New_York", 1L));
 
         // 実行
@@ -255,7 +255,7 @@ class UserServiceTest {
         assertThat(result.getTimezone()).isEqualTo("America/New_York");
         assertThat(result.getVersion()).isEqualTo(1L);
         verify(userRepository).findById(1L);
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).saveAndFlush(any(User.class));
     }
 
     @Test

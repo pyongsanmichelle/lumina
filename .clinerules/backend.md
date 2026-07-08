@@ -49,6 +49,7 @@ globs: "api/**/*, bff/**/*"
 - **エラーフォーマットの分類**:
   - 単項目バリデーション・型不一致（400） ➡️ `fieldErrors` 配列へ格納
   - 相関バリデーション（400） ➡️ `globalErrors` および関連する `fieldErrors` へ格納
+  - ユニーク制約違反（409） ➡️ `globalErrors` へ文脈に応じたコード（`code`）とメッセージを格納
   - 業務チェック違反（422） ➡️ `globalErrors` へ文脈に応じたコード（`code`）とメッセージを格納
   - 楽観ロックエラー（412） ➡️ `globalErrors` へ `OptimisticLockException` コードとメッセージを格納
   - **データの不在（404）管理**:
