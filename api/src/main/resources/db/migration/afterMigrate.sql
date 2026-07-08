@@ -9,7 +9,6 @@ TRUNCATE TABLE general.users RESTART IDENTITY CASCADE;
 
 -- 管理者ユーザー
 INSERT INTO general.users (
-    id,
     idp_subject,
     email,
     name,
@@ -21,7 +20,6 @@ INSERT INTO general.users (
     updated_by,
     updated_at
 ) VALUES (
-    1,
     'sso-user-uuid-0001',
     'admin@example.com',
     '管理者ユーザー',
@@ -36,7 +34,6 @@ INSERT INTO general.users (
 
 -- 一般ユーザー
 INSERT INTO general.users (
-    id,
     idp_subject,
     email,
     name,
@@ -48,7 +45,6 @@ INSERT INTO general.users (
     updated_by,
     updated_at
 ) VALUES (
-    2,
     'sso-user-uuid-0002',
     'user@example.com',
     '一般ユーザー',

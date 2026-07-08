@@ -10,6 +10,7 @@ import com.example.api.presentation.response.GlobalErrorDetail;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ import java.util.List;
  * グローバル例外ハンドラー
  * すべての例外をキャッチし、統一されたエラーレスポンス形式に変換する
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -71,20 +73,31 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex, HttpServletRequest request) {
         
+        Throwable cause = ex.getCause();
+
         List<FieldErrorDetail> fieldErrors = new ArrayList<>();
-        String message = ex.getMessage();
         
         // 型不一致エラーの場合、フィールド名と拒否値を抽出
-        if (message != null && message.contains("Cannot deserialize value")) {
-            String fieldName = extractFieldName(message);
-            String rejectedValue = extractRejectedValue(message);
-            
-            fieldErrors.add(FieldErrorDetail.builder()
-                .field(fieldName)
-                .rejectedValue(rejectedValue)
-                .message(getMessage("valid.type.mismatch"))
-                .build());
+        String message = ex.getMessage();
+        String fieldName = "value";
+
+        if (cause != null) {
+            String causeText = cause.toString();
+
+            String extracted = extractFieldNameFromJsonMessage(causeText);
+
+            if (!"value".equals(extracted)) {
+                fieldName = extracted;
+            }
         }
+
+        String rejectedValue = extractRejectedValue(message);
+
+        fieldErrors.add(FieldErrorDetail.builder()
+            .field(fieldName)
+            .rejectedValue(rejectedValue)
+            .message(getMessage("valid.type.mismatch"))
+            .build());
 
         ErrorResponse errorResponse = buildErrorResponse(
             request,
@@ -287,22 +300,31 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * エラーメッセージからフィールド名を抽出
+     * エラーメッセージからフィールド名を抽出（フォールバック用）
+     * 例: "... (through reference chain: ... UpdateUserRequest[\"version\"])" -> "version"
      */
-    private String extractFieldName(String message) {
-        // "Cannot deserialize value of type `java.lang.Long` from String \"abc\": not a valid `long` value"
-        // のようなメッセージからフィールド名を抽出
+    private String extractFieldNameFromJsonMessage(String message) {
+
+        if (message == null) {
+            return "value";
+        }
+
         try {
-            int start = message.indexOf("`");
-            if (start != -1) {
-                int end = message.indexOf("`", start + 1);
-                if (end != -1) {
-                    return message.substring(start + 1, end);
+            int start = message.lastIndexOf("[\"");
+            if (start >= 0) {
+
+                start += 2;
+
+                int end = message.indexOf("\"]", start);
+
+                if (end > start) {
+                    return message.substring(start, end);
                 }
             }
         } catch (Exception e) {
-            // 抽出失敗時は汎用的な名前を返す
+            log.warn("Field extraction failed", e);
         }
+
         return "value";
     }
 
