@@ -32,7 +32,7 @@
                 </div>
               </div>
               <div class="overflow-x-auto">
-                <SampleAreaChart :data="SALES_DATA" width="550" height="200" />
+                <SampleAreaChart :data="SALES_DATA" :width="550" :height="200" />
               </div>
             </div>
             <div class="bg-white rounded-xl p-5 border" style="border-color: #e2e8f0">
@@ -303,7 +303,7 @@
             </div>
             <div class="bg-white rounded-xl border px-6 py-5" style="border-color: #e2e8f0">
               <SampleSectionTitle>備考・メモ</SampleSectionTitle>
-              <SampleTextareaField label="備考" v-model="formData.note" placeholder="特記事項・納品時の注意点などを入力してください" rows="5" />
+              <SampleTextareaField label="備考" v-model="formData.note" placeholder="特記事項・納品時の注意点などを入力してください" :rows="5" />
             </div>
             <div class="bg-white rounded-xl border px-6 py-4 flex items-center justify-between" style="border-color: #e2e8f0">
               <div class="text-xs" style="color: #94a3b8"><span class="font-semibold" style="color: #ef4444">*</span> 必須項目をすべて入力してください</div>
