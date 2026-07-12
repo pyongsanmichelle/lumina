@@ -59,3 +59,24 @@ sequenceDiagram
     API-->>BFF: 業務データを返却
     BFF-->>Browser: フロントエンド向けにデータを返却
 ```
+
+## 4. BFFの実装ガイドライン (Spring Boot 4.x / Kotlin 2.4.x / WebFlux)
+
+Cline による実装時は、以下の標準的なアプローチを採用すること。独自に複雑なフィルターやトークンパース処理を実装しないこと。また、Java風の `Mono`/`Flux` を直接操作するコードは極力避け、**Kotlin コルーチン (`suspend` 関数) と Kotlin DSL** を積極的に活用すること。
+
+### 4.1. OIDCログインとセッション管理
+- `spring-boot-starter-oauth2-client` を利用し、Keycloak との OIDC 連携を行う。
+- セキュリティ設定は、Spring Security の **Kotlin DSL (`ServerHttpSecurity.invoke { ... }`)** を用いて記述し、`oauth2Login { }` を有効化する。
+- 取得したトークンは Spring Security の標準機能によって WebSession (BFF側) に保持させる。当面はインメモリセッションとし、Redis等は必要になった段階で導入する。
+- セッション Cookie の属性は、原則 `application.yml` の `server.reactive.session.cookie.*` プロパティで設定する。
+  - `http-only: true`
+  - `secure: true` (ローカル開発環境の HTTP 通信時はブラウザ仕様に応じて適宜オフにするか、localhost を用いる)
+  - `same-site: strict`
+
+### 4.2. Token Relay (API呼び出し時のトークン付与)
+- APIサーバーへの通信には、リアクティブな `WebClient` を使用する。
+- リクエストヘッダへのアクセストークン（Bearer）付与、および有効期限切れ時のリフレッシュトークンを用いた自動再取得は、Spring Security が提供する `ServerOAuth2AuthorizedClientExchangeFilterFunction` を `WebClient` に組み込むことで実現し、自作のロジックは極力排除する。
+- `WebClient` の呼び出し時は、`awaitExchange()` や `awaitBody()` などの **コルーチン拡張関数** を使用し、非同期処理を同期的に（フラットに）記述すること。
+
+### 4.3. フロントエンドとの通信境界 (CORS)
+- Nuxt と BFF が別ポートで動くローカル開発環境において Cookie をやり取りするため、BFF 側で適切な CORS 設定（`Allow-Credentials: true` および `Allowed-Origins` の指定）を行うこと。これも Kotlin DSL (`cors { }`) を用いて設定する。
