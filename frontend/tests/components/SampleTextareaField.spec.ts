@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleTextareaField from './SampleTextareaField.vue'
+import SampleTextareaField from '~/components/SampleTextareaField.vue'
 
 describe('SampleTextareaField', () => {
   it('renders label and textarea with correct attributes', () => {

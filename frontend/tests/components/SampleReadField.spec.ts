@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleReadField from './SampleReadField.vue'
+import SampleReadField from '~/components/SampleReadField.vue'
 
 describe('SampleReadField', () => {
   it('renders label and value', () => {

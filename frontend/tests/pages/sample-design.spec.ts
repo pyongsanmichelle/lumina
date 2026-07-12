@@ -22,7 +22,7 @@ vi.mock('~/types/sample', async (importOriginal) => {
   }
 })
 
-import SampleDesignPage from './sample-design.vue'
+import SampleDesignPage from '~/pages/sample-design.vue'
 
 // トーストのスタブを共通定義
 const SampleToastStub = {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleBarChart from './SampleBarChart.vue'
+import SampleBarChart from '~/components/SampleBarChart.vue'
 
 describe('SampleBarChart', () => {
   const mockData = [

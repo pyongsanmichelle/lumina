@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleAlertBanner from './SampleAlertBanner.vue'
+import SampleAlertBanner from '~/components/SampleAlertBanner.vue'
 
 describe('SampleAlertBanner', () => {
   it('renders title and message for warning type', () => {

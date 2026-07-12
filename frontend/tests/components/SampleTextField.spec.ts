@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleTextField from './SampleTextField.vue'
+import SampleTextField from '~/components/SampleTextField.vue'
 
 describe('SampleTextField', () => {
   // textarea と input のどちらでも見つけられるように汎用的なセレクタを定義

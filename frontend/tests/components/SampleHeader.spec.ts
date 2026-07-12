@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleHeader from './SampleHeader.vue'
+import SampleHeader from '~/components/SampleHeader.vue'
 
 describe('SampleHeader', () => {
   it('renders page title for dashboard', () => {

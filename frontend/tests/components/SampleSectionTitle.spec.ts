@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleSectionTitle from './SampleSectionTitle.vue'
+import SampleSectionTitle from '~/components/SampleSectionTitle.vue'
 
 describe('SampleSectionTitle', () => {
   it('renders slot content', () => {

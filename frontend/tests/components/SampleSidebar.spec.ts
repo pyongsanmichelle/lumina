@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleSidebar from './SampleSidebar.vue'
+import SampleSidebar from '~/components/SampleSidebar.vue'
 
 describe('SampleSidebar', () => {
   it('renders navigation items', () => {

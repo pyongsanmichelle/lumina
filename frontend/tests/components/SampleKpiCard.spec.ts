@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleKpiCard from './SampleKpiCard.vue'
+import SampleKpiCard from '~/components/SampleKpiCard.vue'
 
 describe('SampleKpiCard', () => {
   const props = {

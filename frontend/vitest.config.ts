@@ -43,6 +43,6 @@ export default defineConfig({
       },
       ignoreEmptyLines: true,
     },
-    include: ['app/**/*.spec.ts'],
+    include: ['tests/**/*.{test,spec}.ts'],
   },
 })

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleSelectField from './SampleSelectField.vue'
+import SampleSelectField from '~/components/SampleSelectField.vue'
 
 describe('SampleSelectField', () => {
   it('renders label and select', () => {

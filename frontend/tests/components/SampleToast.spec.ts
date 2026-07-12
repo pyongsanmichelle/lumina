@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SampleToast from './SampleToast.vue'
+import SampleToast from '~/components/SampleToast.vue'
 
 describe('SampleToast', () => {
   const mockRemoveToast = vi.fn()
