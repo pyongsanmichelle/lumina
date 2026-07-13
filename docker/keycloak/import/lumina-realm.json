@@ -1,0 +1,63 @@
+{
+  "id": "lumina",
+  "realm": "lumina",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "lumina-bff",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "secret": "local-dev-secret-do-not-use-in-prod",
+      "redirectUris": [
+        "http://localhost:8080/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "backchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "http://localhost:3000/"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "sso-user-uuid-0001",
+      "enabled": true,
+      "email": "admin@example.com",
+      "firstName": "管理者",
+      "lastName": "ユーザー",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Passw0rd!",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "sso-user-uuid-0002",
+      "enabled": true,
+      "email": "user@example.com",
+      "firstName": "一般",
+      "lastName": "ユーザー",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Passw0rd!",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
