@@ -45,6 +45,12 @@ services:
     command: ./gradlew bootRun --continuous
     environment:
       - SPRING_PROFILES_ACTIVE=dev
+      - APP_API_BASE_URL=http://api:8081/api/v1
+    depends_on:
+      api:
+        condition: service_started
+      db:
+        condition: service_healthy
     restart: always
 
   api:

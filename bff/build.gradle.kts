@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.spring") version "2.4.0"
     id("org.springframework.boot") version "4.0.6"
     id("io.spring.dependency-management") version "1.1.7"
+    id("jacoco")
 }
 
 group = "com.example"
@@ -44,4 +45,35 @@ kotlin {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+    // テスト実行後にJaCoCoレポート生成とカバレッジ検証を自動実行
+    finalizedBy(tasks.named("jacocoTestReport"), tasks.named("jacocoTestCoverageVerification"))
+}
+
+// JaCoCo設定: カバレッジレポートを build/reports/jacoco/test/html/index.html に出力
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named("test"))
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        csv.required.set(false)
+    }
+}
+
+// JaCoCoカバレッジ検証（品質ゲート）
+// TODO: 初期の縦通しフェーズのため暫定50%。Controller/Service実装完了後に80%へ引き上げること
+tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn(tasks.named("test"))
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = "0.5".toBigDecimal()
+            }
+        }
+    }
+}
+
+// build時にカバレッジ検証が自動実行されるよう依存関係を設定
+tasks.named("check") {
+    dependsOn(tasks.named("jacocoTestCoverageVerification"))
 }
