@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class HealthController {
 
-    @GetMapping("/health-debug", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @GetMapping("/health", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun healthDebug() = mapOf("status" to "ok")
 }
