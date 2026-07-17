@@ -18,5 +18,6 @@ data class AppProperties(
     val bffOrigin: String,
     /** APIサーバーのベースURL */
     val apiBaseUrl: String,
+    /** KeycloakのログアウトURL */
     val keycloakLogoutUrl: String
 )
