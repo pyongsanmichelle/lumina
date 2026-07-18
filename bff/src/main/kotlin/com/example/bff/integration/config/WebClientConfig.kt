@@ -1,24 +1,35 @@
 package com.example.bff.integration.config
 
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.reactive.function.client.WebClient
 
 /**
- * API（api/）疎通用のWebClient Beanを定義するConfigurationクラス。
+ * 外部API通信用の [WebClient] Bean を定義する構成クラス。
  *
- * @property apiBaseUrl 環境変数 APP_API_BASE_URL から注入されるAPIベースURL（デフォルト: http://api:8081/api/v1）
+ * アプリケーション設定に基づき、標準的な HTTP 通信クライアントを構築します。
+ * 設定値は [AppProperties] を介して一元管理されます。
+ *
+ * @property appProperties アプリケーションの構成プロパティ（APIのベースURL等を保持）
  */
 @Configuration
 class WebClientConfig(
-    @Value("\${app.api.base-url:http://api:8081/api/v1}")
-    private val apiBaseUrl: String
+    private val appProperties: AppProperties
 ) {
+
+    /**
+     * API通信用の [WebClient] インスタンスを生成して Bean として登録します。
+     * 
+     * Spring Boot が提供する [WebClient.Builder] を注入することで、
+     * 共通の設定やフィルタリングを適用しやすい柔軟な構成にしています。
+     *
+     * @param builder Spring Bootが自動構成した WebClient.Builder
+     * @return 構築済みの [WebClient] インスタンス
+     */
     @Bean
-    fun apiWebClient(): WebClient {
-        return WebClient.builder()
-            .baseUrl(apiBaseUrl)
+    fun apiWebClient(builder: WebClient.Builder): WebClient {
+        return builder
+            .baseUrl(appProperties.apiBaseUrl)
             .build()
     }
 }
