@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: BFF Auth API (partial)
+  version: '1.0.0'
+  description: >
+    docs/auth/oidc_flow.md 4.3節に基づく、認証状態確認エンドポイントの
+    フロントエンド型生成専用のOpenAPI定義。BFF実装の正式仕様書ではない。
+paths:
+  /bff/auth/me:
+    get:
+      operationId: getAuthMe
+      summary: 認証状態確認
+      responses:
+        '200':
+          description: 認証済み
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authenticated, userId, username, roles]
+                properties:
+                  authenticated:
+                    type: boolean
+                    enum: [true]
+                  userId:
+                    type: string
+                  username:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authenticated, message]
+                properties:
+                  authenticated:
+                    type: boolean
+                    enum: [false]
+                  message:
+                    type: string

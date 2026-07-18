@@ -27,12 +27,40 @@ class RedirectUriCookieFilter(
     companion object {
         /** 復帰先パスを受け取るためのクエリパラメータ名 */
         const val REDIRECT_URI_PARAM = "redirect_uri"
-        
+
         /** 復帰先パスを保持するためのCookie名 */
         const val POST_LOGIN_REDIRECT_URI_COOKIE = "POST_LOGIN_REDIRECT_URI"
-        
+
         /** Cookieの有効期限（分）。ログイン操作にかかる時間を考慮して5分間とする */
         const val MAX_AGE_MINUTES = 5L
+
+        /**
+         * `redirect_uri` が安全な同一オリジン内のパスであるかを検証します（オープンリダイレクト対策）。
+         *
+         * 以下の条件をすべて満たす場合のみ安全と判定します：
+         * 1. 空文字ではないこと
+         * 2. 制御文字を含まないこと (HTTPレスポンス分割攻撃等の防止)
+         * 3. `\`（バックスラッシュ）を含まないこと (ブラウザの誤解釈を悪用した攻撃の防止)
+         * 4. `/` から始まる相対パスであること
+         * 5. `//`（プロトコル相対URL）で始まらないこと (外部ドメインへの誘導防止)
+         * 6. `http://` または `https://` を含まないこと
+         *
+         * ログイン開始時のクエリパラメータ検証（本フィルター）と、認証成功時の
+         * Cookie読み取り値の再検証（CustomAuthenticationSuccessHandler）の
+         * 両方から共通利用するため、companion object のメソッドとして公開する。
+         *
+         * @param redirectUri 検証対象のURI文字列
+         * @return 安全と判定された場合はパス文字列、危険・不正な場合は `null`
+         */
+        internal fun validateRedirectUri(redirectUri: String?): String? {
+            if (redirectUri.isNullOrBlank()) return null
+            if (redirectUri.any { it.code in 0..31 || it.code == 127 }) return null
+            if (redirectUri.contains("\\")) return null
+            if (!redirectUri.startsWith("/")) return null
+            if (redirectUri.startsWith("//")) return null
+            if (redirectUri.contains("http://") || redirectUri.contains("https://")) return null
+            return redirectUri
+        }
     }
 
     /**
@@ -78,41 +106,5 @@ class RedirectUriCookieFilter(
         // 結果として CustomAuthenticationSuccessHandler が Cookie 不在を検知し、
         // デフォルトの FRONTEND_ORIGIN/ へ誘導する安全なフォールバックとなります。
         return chain.filter(exchange)
-    }
-
-    /**
-     * `redirect_uri` が安全な同一オリジン内のパスであるかを検証します（オープンリダイレクト対策）。
-     *
-     * 以下の条件をすべて満たす場合のみ安全と判定します：
-     * 1. 空文字ではないこと
-     * 2. 制御文字を含まないこと (HTTPレスポンス分割攻撃等の防止)
-     * 3. `\`（バックスラッシュ）を含まないこと (ブラウザの誤解釈を悪用した攻撃の防止)
-     * 4. `/` から始まる相対パスであること
-     * 5. `//`（プロトコル相対URL）で始まらないこと (外部ドメインへの誘導防止)
-     * 6. `http://` または `https://` を含まないこと
-     *
-     * @param redirectUri 検証対象のURI文字列
-     * @return 安全と判定された場合はパス文字列、危険・不正な場合は `null`
-     */
-    private fun validateRedirectUri(redirectUri: String): String? {
-        // 条件1: 空文字や空白のみの場合はNG
-        if (redirectUri.isBlank()) return null
-
-        // 条件2: 制御文字が含まれている場合はNG
-        if (redirectUri.any { it.code in 0..31 || it.code == 127 }) return null
-
-        // 条件3: バックスラッシュが含まれている場合はNG
-        if (redirectUri.contains("\\")) return null
-
-        // 条件4: 必ず `/` から始まる相対パスでなければならない
-        if (!redirectUri.startsWith("/")) return null
-
-        // 条件5: `//` で始まってはならない
-        if (redirectUri.startsWith("//")) return null
-
-        // 条件6: 万が一スキームが含まれている場合はNG
-        if (redirectUri.contains("http://") || redirectUri.contains("https://")) return null
-
-        return redirectUri
     }
 }
