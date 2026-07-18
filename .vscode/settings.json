@@ -1,0 +1,40 @@
+{
+  // --- 基本設定 ---
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": true,
+  // --- Prettier をデフォルトフォーマッターに設定 ---
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  // --- ESLint の自動修正設定 ---
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  // --- Java/Kotlin はそれぞれの言語固有のフォーマッターを推奨 ---
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java"
+  },
+  "[kotlin]": {
+    "editor.defaultFormatter": "fwcd.kotlin"
+  }
+}

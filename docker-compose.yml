@@ -46,6 +46,11 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - APP_API_BASE_URL=http://api:8081/api/v1
+      # Keycloak OIDC設定（値は .env から注入）
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3000}
+      - BFF_ORIGIN=${BFF_ORIGIN:-http://localhost:8080}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
     depends_on:
       api:
         condition: service_started
@@ -86,6 +91,7 @@ services:
     command: start-dev --import-realm
     environment:
       - KC_HEALTH_ENABLED=true
+      - KC_HOSTNAME=http://localhost:8082
       - KC_HOSTNAME_STRICT=false
       - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USER:-admin}
       - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
