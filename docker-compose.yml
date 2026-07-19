@@ -74,10 +74,14 @@ services:
       - DB_NAME=lumina
       - DB_SCHEMA=general
       - DB_USER=luminar
-      - DB_PASSWORD=secure_dev_pass_2026
+      - DB_PASSWORD=${DB_PASSWORD:-secure_dev_pass_2026}
+      # JWT検証用のKeycloak JWKSエンドポイント（Docker内部ネットワーク経由）
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/lumina/protocol/openid-connect/certs
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     restart: always
 
   keycloak:

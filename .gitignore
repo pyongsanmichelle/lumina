@@ -2,6 +2,11 @@
 **/build/
 !**/src/**/build/
 
+# Local environment secrets (use .env.example as template)
+.env
+.env.local
+.env.*.local
+
 # Ignore Gradle GUI config
 gradle-app.setting
 

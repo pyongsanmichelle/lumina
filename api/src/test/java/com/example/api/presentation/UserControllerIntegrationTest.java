@@ -14,6 +14,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -42,7 +44,10 @@ class UserControllerIntegrationTest {
         // MockMvcをセットアップ
         // MOCK環境ではcontext-path(/api/v1)は適用されないため、
         // Controllerの@RequestMappingに指定されたパスそのものでアクセスする
+        // セキュリティフィルターを有効化し、全リクエストを検証済みJWTとして扱う
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+            .apply(springSecurity())
+            .defaultRequest(get("/").with(jwt()))
             .alwaysDo(print())
             .build();
     }

@@ -22,6 +22,11 @@ spring:
     basename: messages
     encoding: UTF-8
     fallback-to-system-locale: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak:8080/realms/lumina/protocol/openid-connect/certs}
 
 logging:
   level:
