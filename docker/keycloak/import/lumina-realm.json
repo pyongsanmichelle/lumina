@@ -16,12 +16,8 @@
       "serviceAccountsEnabled": false,
       "authorizationServicesEnabled": false,
       "secret": "local-dev-secret-do-not-use-in-prod",
-      "redirectUris": [
-        "http://localhost:8080/login/oauth2/code/keycloak"
-      ],
-      "webOrigins": [
-        "http://localhost:3000"
-      ],
+      "redirectUris": ["http://localhost:8080/bff/login/oauth2/code/keycloak"],
+      "webOrigins": ["http://localhost:3000"],
       "attributes": {
         "backchannel.logout.session.required": "true",
         "post.logout.redirect.uris": "http://localhost:3000/"
