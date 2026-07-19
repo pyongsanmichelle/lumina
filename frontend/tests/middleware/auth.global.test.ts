@@ -130,6 +130,19 @@ describe('auth.global middleware (SSR)', () => {
 
     expect(mockNavigateTo).toHaveBeenCalledTimes(1);
   });
+
+  it('error.response.status（openapi-fetch v4形式）でも401判定できること', async () => {
+    mockGetAuthMe.mockResolvedValue({
+      data: undefined,
+      error: { response: { status: 401 } },
+    });
+
+    const mw = await reloadMiddleware();
+    const to = { fullPath: '/dashboard' };
+    await mw(to);
+
+    expect(mockNavigateTo).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('auth.global middleware (CSR)', () => {
@@ -166,7 +179,7 @@ describe('auth.global middleware (CSR)', () => {
     const to = { fullPath: '/dashboard' };
     await mw(to);
 
-    expect(window.location.href).toContain(`${CSR_BFF_ORIGIN}/oauth2/authorization/keycloak`);
+    expect(window.location.href).toContain(`${CSR_BFF_ORIGIN}/bff/login`);
     expect(window.location.href).toContain('redirect_uri=%2Fdashboard');
   });
 });

@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     bffInternalOrigin: process.env.BFF_INTERNAL_ORIGIN || 'http://bff:8080',
     public: {
       // ブラウザ向け公開アドレス
-      bffOrigin: process.env.BFF_ORIGIN || 'http://localhost:8080',
+      bffOrigin: process.env.BFF_ORIGIN || 'http://localhost:8080/bff',
     },
   },
 });

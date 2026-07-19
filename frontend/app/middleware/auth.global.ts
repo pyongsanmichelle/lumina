@@ -1,5 +1,5 @@
 // app/middleware/auth.global.ts
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to: any) => {
   const config = useRuntimeConfig();
   const bffOrigin = config.public.bffOrigin as string;
 
@@ -15,15 +15,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
         credentials: 'include',
       });
 
-  const { error } = await client.GET('/bff/auth/me');
+  const { error, response } = await client.GET('/bff/auth/me');
 
   if (!error) {
     return;
   }
 
-  const status =
-    (error as { status?: number; statusCode?: number }).status ??
-    (error as { status?: number; statusCode?: number }).statusCode;
+  const status = response?.status ?? (error as Record<string, unknown>).status;
 
   if (status !== 401) {
     return;

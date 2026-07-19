@@ -6,9 +6,9 @@ export interface paths {
           content: {
             'application/json': {
               authenticated: true;
-              userId: string;
-              username: string;
-              roles: string[];
+              userId?: string;
+              username?: string;
+              roles?: string[];
             };
           };
         };
