@@ -223,7 +223,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalStateException(
             IllegalStateException ex, HttpServletRequest request) {
-        
+
+        log.warn("Business rule violation on {} {}: {}",
+            request.getMethod(), request.getRequestURI(), ex.getMessage());
+
         List<GlobalErrorDetail> globalErrors = new ArrayList<>();
         globalErrors.add(GlobalErrorDetail.builder()
             .code("BusinessRuleViolation")
@@ -248,7 +251,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
-        
+
+        log.error("Unhandled exception on {} {}",
+            request.getMethod(), request.getRequestURI(), ex);
+
         List<GlobalErrorDetail> globalErrors = new ArrayList<>();
         globalErrors.add(GlobalErrorDetail.builder()
             .code("SystemError")
@@ -295,6 +301,7 @@ public class GlobalExceptionHandler {
         try {
             return messageSource.getMessage(key, args, LocaleContextHolder.getLocale());
         } catch (Exception e) {
+            log.warn("Message resolution failed for key '{}'; falling back to raw key", key, e);
             return key;
         }
     }
@@ -334,6 +341,9 @@ public class GlobalExceptionHandler {
     private String extractRejectedValue(String message) {
         // "Cannot deserialize value of type `java.lang.Long` from String \"abc\": not a valid `long` value"
         // のようなメッセージから拒否値を抽出
+        if (message == null) {
+            return null;
+        }
         try {
             int start = message.indexOf("String \"");
             if (start != -1) {
@@ -344,7 +354,7 @@ public class GlobalExceptionHandler {
                 }
             }
         } catch (Exception e) {
-            // 抽出失敗時はnullを返す
+            log.debug("Rejected value extraction failed", e);
         }
         return null;
     }

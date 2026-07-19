@@ -3,6 +3,8 @@ package com.example.api.infrastructure.config;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.callback.Context;
 import org.flywaydb.core.api.callback.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AfterMigrateCallback implements Callback {
+
+    private static final Logger log = LoggerFactory.getLogger(AfterMigrateCallback.class);
 
     private final Environment environment;
 
@@ -56,7 +60,7 @@ public class AfterMigrateCallback implements Callback {
     public void handle(Event event, Context context) {
         // SQL実行は afterMigrate.sql に委譲
         // このメソッドは supports() が true を返した場合のみ呼び出される
-        System.out.println("[AfterMigrateCallback] afterMigrate.sql の実行を許可しました。");
+        log.info("afterMigrate.sql の実行を許可しました。(profile=dev)");
     }
 
     /**
