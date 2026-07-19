@@ -1,5 +1,7 @@
 package com.example.bff.presentation.config
 
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.AuthenticationException
@@ -27,6 +29,8 @@ import reactor.core.publisher.Mono
  * ```
  */
 class CustomAuthenticationEntryPoint : ServerAuthenticationEntryPoint {
+    private val log = LoggerFactory.getLogger(CustomAuthenticationEntryPoint::class.java)
+
     /**
      * 認証に失敗、または未認証の状態でアクセスがあった際にSpring Securityから呼び出される処理。
      * リダイレクトは行わず、HTTPステータス 401 とエラー詳細のJSONを直接レスポンスに書き込む。
@@ -39,6 +43,15 @@ class CustomAuthenticationEntryPoint : ServerAuthenticationEntryPoint {
         exchange: ServerWebExchange,
         exception: AuthenticationException,
     ): Mono<Void> {
+        log.info(
+            "Authentication failed. path={} trace_id={} user_id={} exception={}: {}",
+            exchange.request.path,
+            MDC.get("trace_id") ?: "no-trace",
+            MDC.get("user_id") ?: "anonymous",
+            exception::class.java.name,
+            exception.message,
+        )
+
         // レスポンスオブジェクトの取得
         val response = exchange.response
 

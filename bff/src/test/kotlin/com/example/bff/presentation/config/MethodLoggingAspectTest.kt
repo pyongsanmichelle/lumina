@@ -14,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
 class MethodLoggingAspectTest {
-
     @Autowired
     lateinit var target: TestTarget
 

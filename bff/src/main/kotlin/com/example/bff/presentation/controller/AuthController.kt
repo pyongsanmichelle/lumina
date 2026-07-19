@@ -1,6 +1,7 @@
 package com.example.bff.presentation.controller
 
 import com.example.bff.presentation.dto.AuthResponse
+import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
@@ -15,6 +16,8 @@ import reactor.core.publisher.Mono
  */
 @RestController
 class AuthController {
+    private val log = LoggerFactory.getLogger(AuthController::class.java)
+
     /**
      * ログイン中のユーザー情報を取得します。
      *
@@ -24,8 +27,13 @@ class AuthController {
     @GetMapping("/auth/me", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAuthStatus(
         @AuthenticationPrincipal principal: OidcUser?,
-    ): Mono<AuthResponse> =
-        Mono.just(
+    ): Mono<AuthResponse> {
+        log.info(
+            "AuthController.getAuthStatus called. principalPresent={} principalSubject={}",
+            principal != null,
+            principal?.subject,
+        )
+        return Mono.just(
             if (principal != null) {
                 // 認証済みの場合：ユーザー詳細情報を設定
                 AuthResponse(
@@ -39,4 +47,5 @@ class AuthController {
                 AuthResponse(authenticated = false)
             },
         )
+    }
 }
