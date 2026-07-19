@@ -6,11 +6,10 @@ import org.junit.jupiter.api.Test
 
 /**
  * [HealthController] のテストクラス。
- * 
+ *
  * システムのヘルスチェックエンドポイントが正しく稼働状況を返すことを検証します。
  */
 class HealthControllerTest {
-
     private val controller = HealthController()
 
     /**

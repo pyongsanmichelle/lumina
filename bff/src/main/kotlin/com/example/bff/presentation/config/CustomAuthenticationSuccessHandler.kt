@@ -26,23 +26,24 @@ import reactor.core.publisher.Mono
 class CustomAuthenticationSuccessHandler(
     private val appProperties: AppProperties,
 ) : ServerAuthenticationSuccessHandler {
-
     override fun onAuthenticationSuccess(
         webFilterExchange: WebFilterExchange,
         authentication: Authentication,
     ): Mono<Void> {
         val exchange = webFilterExchange.exchange
-        val savedCookie = exchange.request.cookies
-            .getFirst(RedirectUriCookieFilter.POST_LOGIN_REDIRECT_URI_COOKIE)
+        val savedCookie =
+            exchange.request.cookies
+                .getFirst(RedirectUriCookieFilter.POST_LOGIN_REDIRECT_URI_COOKIE)
 
         // Cookie不在、または改ざん等で不正な値の場合はデフォルト("/")へフォールバック
         val redirectPath = RedirectUriCookieFilter.validateRedirectUri(savedCookie?.value) ?: "/"
 
-        val targetUrl = UriComponentsBuilder
-            .fromUriString(appProperties.frontendOrigin)
-            .path(redirectPath)
-            .build(true)
-            .toUri()
+        val targetUrl =
+            UriComponentsBuilder
+                .fromUriString(appProperties.frontendOrigin)
+                .path(redirectPath)
+                .build(true)
+                .toUri()
 
         val response = exchange.response
         response.statusCode = HttpStatus.FOUND
@@ -50,13 +51,15 @@ class CustomAuthenticationSuccessHandler(
 
         // 使い終えた一時Cookieは即座に無効化する(Max-Age=0で削除)
         if (savedCookie != null) {
-            val expired = ResponseCookie.from(RedirectUriCookieFilter.POST_LOGIN_REDIRECT_URI_COOKIE, "")
-                .httpOnly(true)
-                .secure(appProperties.frontendOrigin.startsWith("https"))
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(0)
-                .build()
+            val expired =
+                ResponseCookie
+                    .from(RedirectUriCookieFilter.POST_LOGIN_REDIRECT_URI_COOKIE, "")
+                    .httpOnly(true)
+                    .secure(appProperties.frontendOrigin.startsWith("https"))
+                    .sameSite("Lax")
+                    .path("/")
+                    .maxAge(0)
+                    .build()
             response.addCookie(expired)
         }
 

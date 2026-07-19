@@ -9,25 +9,24 @@ import reactor.core.publisher.Mono
 
 /**
  * 未認証アクセス時に 401 Unauthorized を返すカスタムエントリポイント。
- * 
+ *
  * [背景・目的]
  * Spring Securityのデフォルト挙動（ログイン画面への302リダイレクトなど）を防ぎ、
  * フロントエンド(SPA)がエラーを直接ハンドリングできるようJSONレスポンスを返す。
- * 
+ *
  * [利用シーン]
  * - 未ログイン状態での保護エンドポイントへのアクセス
  * - セッションタイムアウト、またはアクセストークンの失効
  *
  * [レスポンス形式]
  * ```json
- * { 
- *   "authenticated": false, 
- *   "message": "Unauthorized" 
+ * {
+ *   "authenticated": false,
+ *   "message": "Unauthorized"
  * }
  * ```
  */
 class CustomAuthenticationEntryPoint : ServerAuthenticationEntryPoint {
-
     /**
      * 認証に失敗、または未認証の状態でアクセスがあった際にSpring Securityから呼び出される処理。
      * リダイレクトは行わず、HTTPステータス 401 とエラー詳細のJSONを直接レスポンスに書き込む。
@@ -38,11 +37,11 @@ class CustomAuthenticationEntryPoint : ServerAuthenticationEntryPoint {
      */
     override fun commence(
         exchange: ServerWebExchange,
-        exception: AuthenticationException
+        exception: AuthenticationException,
     ): Mono<Void> {
         // レスポンスオブジェクトの取得
         val response = exchange.response
-        
+
         // HTTPステータスコードを 401 (Unauthorized) に設定
         response.statusCode = HttpStatus.UNAUTHORIZED
         // フロントエンドがJSONとして解釈できるようにContent-Typeを指定

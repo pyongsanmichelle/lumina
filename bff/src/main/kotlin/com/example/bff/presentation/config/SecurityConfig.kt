@@ -15,7 +15,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 
 /**
  * BFF（Backend For Frontend）のセキュリティ設定クラス。
- * 
+ *
  * Spring SecurityのWebFlux設定を統括し、認証・認可、CORS、CSRF対策、
  * および各カスタムハンドラの紐付けを行います。
  *
@@ -28,12 +28,11 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 class SecurityConfig(
     private val appProperties: AppProperties,
     private val customLogoutSuccessHandler: CustomLogoutSuccessHandler,
-    private val customAuthenticationSuccessHandler: CustomAuthenticationSuccessHandler
+    private val customAuthenticationSuccessHandler: CustomAuthenticationSuccessHandler,
 ) {
-
     /**
      * セキュリティフィルターチェーンを構築します。
-     * 
+     *
      * 本設定により、以下のセキュリティ層が適用されます。
      * 1. OAuth2 認証フロー
      * 2. ログアウト処理
@@ -45,8 +44,8 @@ class SecurityConfig(
      * @return 構成済みのフィルターチェーン
      */
     @Bean
-    fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        return http
+    fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
+        http
             // OAuth2 ログインの設定
             .oauth2Login { oauth2 ->
                 // 認証成功時、Cookieから保存しておいたリダイレクト先に遷移させるカスタムハンドラ
@@ -65,7 +64,7 @@ class SecurityConfig(
                 csrf.csrfTokenRepository(
                     CookieServerCsrfTokenRepository.withHttpOnlyFalse().apply {
                         setCookiePath("/")
-                    }
+                    },
                 )
             }
             // CORS 設定
@@ -86,11 +85,9 @@ class SecurityConfig(
             }
             // 認証処理の直前でリダイレクトパスをCookieに保存するカスタムフィルターを挿入
             .addFilterBefore(
-                RedirectUriCookieFilter(appProperties), 
-                SecurityWebFiltersOrder.AUTHENTICATION
-            )
-            .build()
-    }
+                RedirectUriCookieFilter(appProperties),
+                SecurityWebFiltersOrder.AUTHENTICATION,
+            ).build()
 
     /**
      * CORSの設定を構築します。
@@ -99,13 +96,14 @@ class SecurityConfig(
      * @return 設定済みのCORSソース
      */
     private fun corsConfigurationSource(): CorsConfigurationSource {
-        val configuration = CorsConfiguration().apply {
-            allowedOrigins = listOf(appProperties.frontendOrigin) // フロントエンドオリジンを許可
-            allowCredentials = true // 認証情報（Cookie等）の送信を許可
-            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-            allowedHeaders = listOf("Content-Type", "Authorization", "X-XSRF-TOKEN")
-        }
-        
+        val configuration =
+            CorsConfiguration().apply {
+                allowedOrigins = listOf(appProperties.frontendOrigin) // フロントエンドオリジンを許可
+                allowCredentials = true // 認証情報（Cookie等）の送信を許可
+                allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                allowedHeaders = listOf("Content-Type", "Authorization", "X-XSRF-TOKEN")
+            }
+
         return UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", configuration)
         }

@@ -9,10 +9,9 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 class HealthController {
-
     /**
      * システムの現在の状態を返します。
-     * 
+     *
      * @return 稼働状況を示す [HealthResponse] オブジェクト
      */
     @GetMapping("/health", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -23,5 +22,5 @@ class HealthController {
  * ヘルスチェック用レスポンスDTO。
  */
 data class HealthResponse(
-    val status: String
+    val status: String,
 )

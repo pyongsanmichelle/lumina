@@ -10,7 +10,7 @@ import java.time.Duration
 
 /**
  * ディープリンク復帰用のフィルター。
- * 
+ *
  * `/oauth2/authorization/keycloak?redirect_uri=...` のクエリパラメータを読み取り、
  * 認証成功後のリダイレクト先パスを一時Cookie (`POST_LOGIN_REDIRECT_URI`) に保存します。
  *
@@ -21,9 +21,8 @@ import java.time.Duration
  * @property appProperties アプリケーション設定（CookieのSecure属性判定等に使用）
  */
 class RedirectUriCookieFilter(
-    private val appProperties: AppProperties
+    private val appProperties: AppProperties,
 ) : WebFilter {
-
     companion object {
         /** 復帰先パスを受け取るためのクエリパラメータ名 */
         const val REDIRECT_URI_PARAM = "redirect_uri"
@@ -65,7 +64,7 @@ class RedirectUriCookieFilter(
 
     /**
      * HTTPリクエストをインターセプトし、特定のログイン開始URLに対する処理を差し込みます。
-     * 
+     *
      * リクエストパスが Keycloak の認可エンドポイントへのアクセスであり、
      * かつ `redirect_uri` パラメータが存在する場合にのみ、その値を検証してCookieに保存します。
      *
@@ -73,7 +72,10 @@ class RedirectUriCookieFilter(
      * @param chain フィルターチェーン（後続のフィルターやハンドラを呼び出すために使用）
      * @return フィルター処理の完了を示す `Mono<Void>`
      */
-    override fun filter(exchange: ServerWebExchange, chain: WebFilterChain): Mono<Void> {
+    override fun filter(
+        exchange: ServerWebExchange,
+        chain: WebFilterChain,
+    ): Mono<Void> {
         val request = exchange.request
         val path = request.path.pathWithinApplication().value()
 
@@ -83,25 +85,28 @@ class RedirectUriCookieFilter(
         }
 
         // パラメータの取得: クエリパラメータに redirect_uri がなければ何もしない
-        val redirectUri = request.queryParams.getFirst(REDIRECT_URI_PARAM)
-            ?: return chain.filter(exchange)
+        val redirectUri =
+            request.queryParams.getFirst(REDIRECT_URI_PARAM)
+                ?: return chain.filter(exchange)
 
         // オープンリダイレクト対策: redirect_uri が安全な相対パスかバリデーション
         val validatedPath = validateRedirectUri(redirectUri)
 
         if (validatedPath != null) {
             // 検証成功時: 一時Cookieを発行してパスを保存
-            val cookie = ResponseCookie.from(POST_LOGIN_REDIRECT_URI_COOKIE, validatedPath)
-                .httpOnly(true) // JavaScriptからのアクセスを禁止（XSS対策）
-                .secure(appProperties.frontendOrigin.startsWith("https")) // HTTPS環境ならSecure属性を付与
-                .sameSite("Lax") // 別サイトからの遷移時にもCookieを送信させる
-                .path("/")
-                .maxAge(Duration.ofMinutes(MAX_AGE_MINUTES)) // ログインにかかる時間を考慮し5分間有効
-                .build()
+            val cookie =
+                ResponseCookie
+                    .from(POST_LOGIN_REDIRECT_URI_COOKIE, validatedPath)
+                    .httpOnly(true) // JavaScriptからのアクセスを禁止（XSS対策）
+                    .secure(appProperties.frontendOrigin.startsWith("https")) // HTTPS環境ならSecure属性を付与
+                    .sameSite("Lax") // 別サイトからの遷移時にもCookieを送信させる
+                    .path("/")
+                    .maxAge(Duration.ofMinutes(MAX_AGE_MINUTES)) // ログインにかかる時間を考慮し5分間有効
+                    .build()
 
             exchange.response.addCookie(cookie)
         }
-        
+
         // 検証失敗時は Cookie を設定せず、そのまま標準のOAuth2ログインフローを継続。
         // 結果として CustomAuthenticationSuccessHandler が Cookie 不在を検知し、
         // デフォルトの FRONTEND_ORIGIN/ へ誘導する安全なフォールバックとなります。

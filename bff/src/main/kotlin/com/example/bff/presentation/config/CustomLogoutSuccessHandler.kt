@@ -22,9 +22,8 @@ import reactor.core.publisher.Mono
  */
 @Component
 class CustomLogoutSuccessHandler(
-    private val appProperties: AppProperties
+    private val appProperties: AppProperties,
 ) : ServerLogoutSuccessHandler {
-
     /**
      * ログアウト成功時のリダイレクト処理を実行します。
      *
@@ -34,32 +33,34 @@ class CustomLogoutSuccessHandler(
      */
     override fun onLogoutSuccess(
         webFilterExchange: WebFilterExchange,
-        authentication: Authentication
+        authentication: Authentication,
     ): Mono<Void> {
         // Keycloakでのログアウト完了後に戻ってくる、フロントエンドのURLを定義
         val redirectUri = "${appProperties.frontendOrigin}/"
 
         // 認証情報から IDトークン (id_token_hint) を抽出
         // どのセッションを終了させるかをKeycloakに伝えるために必要（無い場合はnullになる）
-        val idToken = (authentication as? OAuth2AuthenticationToken)
-            ?.let { token ->
-                val oidcUser = token.principal as? OidcUser
-                oidcUser?.idToken?.tokenValue
-            }
+        val idToken =
+            (authentication as? OAuth2AuthenticationToken)
+                ?.let { token ->
+                    val oidcUser = token.principal as? OidcUser
+                    oidcUser?.idToken?.tokenValue
+                }
 
         // UriComponentsBuilder を用いて、KeycloakへのリダイレクトURLを安全に構築
-        val redirectLocation = UriComponentsBuilder.fromUriString(appProperties.keycloakLogoutUrl)
-            // ログアウト後の遷移先URLを指定（値は自動的にURLエンコードされる）
-            .queryParam("post_logout_redirect_uri", redirectUri)
-            .apply {
-                // IDトークンが存在する場合のみ、クエリパラメータとして追加する
-                if (idToken != null) {
-                    queryParam("id_token_hint", idToken)
-                }
-            }
-            .build()
-            // 文字列ではなく、レスポンスヘッダに設定できる java.net.URI オブジェクトとして出力
-            .toUri()
+        val redirectLocation =
+            UriComponentsBuilder
+                .fromUriString(appProperties.keycloakLogoutUrl)
+                // ログアウト後の遷移先URLを指定（値は自動的にURLエンコードされる）
+                .queryParam("post_logout_redirect_uri", redirectUri)
+                .apply {
+                    // IDトークンが存在する場合のみ、クエリパラメータとして追加する
+                    if (idToken != null) {
+                        queryParam("id_token_hint", idToken)
+                    }
+                }.build()
+                // 文字列ではなく、レスポンスヘッダに設定できる java.net.URI オブジェクトとして出力
+                .toUri()
 
         // クライアントに対するリダイレクトレスポンスの設定
         val response = webFilterExchange.exchange.response
@@ -67,7 +68,7 @@ class CustomLogoutSuccessHandler(
         response.statusCode = HttpStatus.FOUND
         // Locationヘッダに構築したKeycloakのログアウトエンドポイントを設定
         response.headers.location = redirectLocation
-        
+
         // レスポンス処理の完了をReactorの非同期チェーンに通知
         return response.setComplete()
     }

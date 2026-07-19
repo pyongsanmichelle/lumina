@@ -5,8 +5,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
-import org.springframework.http.HttpStatus
 import org.springframework.http.HttpCookie
+import org.springframework.http.HttpStatus
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest
 import org.springframework.mock.web.server.MockServerWebExchange
 import org.springframework.security.core.Authentication
@@ -16,19 +16,19 @@ import reactor.test.StepVerifier
 
 /**
  * [CustomAuthenticationSuccessHandler] のテストクラス。
- * 
+ *
  * 認証成功後のリダイレクト処理において、一時的なクッキーの存在有無による
  * リダイレクト先の決定と、クッキーの適切な削除処理を検証します。
  */
 class CustomAuthenticationSuccessHandlerTest {
-
     // テスト用の設定値を準備
-    private val appProperties = AppProperties(
-        frontendOrigin = "http://localhost:3000",
-        bffOrigin = "http://localhost:8080",
-        apiBaseUrl = "http://api:8080",
-        keycloakLogoutUrl = "http://keycloak:8080/realms/lumina/protocol/openid-connect/logout"
-    )
+    private val appProperties =
+        AppProperties(
+            frontendOrigin = "http://localhost:3000",
+            bffOrigin = "http://localhost:8080",
+            apiBaseUrl = "http://api:8080",
+            keycloakLogoutUrl = "http://keycloak:8080/realms/lumina/protocol/openid-connect/logout",
+        )
 
     private val handler = CustomAuthenticationSuccessHandler(appProperties)
 
@@ -40,9 +40,11 @@ class CustomAuthenticationSuccessHandlerTest {
     @DisplayName("認証成功時: Cookieありならそのパスへリダイレクトし、Cookie削除用のレスポンスを返すこと")
     fun onAuthenticationSuccess_withRedirectCookie_redirectsToCookiePathAndClearsCookie() {
         // Arrange: リダイレクト先情報を保持したCookieを含むリクエストを作成
-        val request = MockServerHttpRequest.get("/oauth2/authorization/keycloak")
-            .cookie(HttpCookie(RedirectUriCookieFilter.POST_LOGIN_REDIRECT_URI_COOKIE, "/dashboard"))
-            .build()
+        val request =
+            MockServerHttpRequest
+                .get("/oauth2/authorization/keycloak")
+                .cookie(HttpCookie(RedirectUriCookieFilter.POST_LOGIN_REDIRECT_URI_COOKIE, "/dashboard"))
+                .build()
         val exchange = MockServerWebExchange.from(request)
         val chain = Mockito.mock(WebFilterChain::class.java)
         val webFilterExchange = WebFilterExchange(exchange, chain)

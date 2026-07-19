@@ -7,5 +7,5 @@ data class AuthResponse(
     val authenticated: Boolean,
     val userId: String? = null,
     val username: String? = null,
-    val roles: List<String>? = null
+    val roles: List<String>? = null,
 )

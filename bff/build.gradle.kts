@@ -4,6 +4,7 @@ plugins {
     id("org.springframework.boot") version "4.0.6"
     id("io.spring.dependency-management") version "1.1.7"
     id("jacoco")
+    id("com.diffplug.spotless") version "8.8.0"
 }
 
 group = "com.example"
@@ -79,7 +80,25 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     }
 }
 
-// build時にカバレッジ検証が自動実行されるよう依存関係を設定
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
 tasks.named("check") {
-    dependsOn(tasks.named("jacocoTestCoverageVerification"))
+    dependsOn(
+        tasks.named("jacocoTestCoverageVerification"),
+        tasks.named("spotlessCheck"),
+    )
 }
