@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
-import Sidebar from '~/app/components/Sidebar.vue';
-import { useLogout } from '~/app/composables/useLogout';
+import Sidebar from '~/components/Sidebar.vue';
+import { useLogout } from '~/composables/useLogout';
 
-vi.mock('~/app/composables/useLogout', () => ({
+vi.mock('~/composables/useLogout', () => ({
   useLogout: vi.fn(),
 }));
 

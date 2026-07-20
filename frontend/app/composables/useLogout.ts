@@ -15,8 +15,11 @@ export function useLogout() {
       const { error } = await client.post('/bff/logout', {
         headers: { 'X-XSRF-TOKEN': csrf },
       });
-      window.location.href = '/';
+      if (!error) {
+        window.location.href = '/';
+      }
     } catch {
+      // バックチャネルログアウト失敗時もブラウザをルートへ遷移させる
       window.location.href = '/';
     }
   }

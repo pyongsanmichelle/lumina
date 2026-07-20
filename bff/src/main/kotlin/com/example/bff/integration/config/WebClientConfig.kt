@@ -30,4 +30,13 @@ class WebClientConfig(
         builder
             .baseUrl(appProperties.apiBaseUrl)
             .build()
+
+    /**
+     * Keycloak との通信用 [WebClient].
+     *
+     * RP-Initiated Logout のバックチャネル呼び出し等に使用する.
+     */
+    @Bean
+    fun keycloakWebClient(builder: WebClient.Builder): WebClient =
+        builder.build()
 }
