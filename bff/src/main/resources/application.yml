@@ -24,6 +24,8 @@ spring:
             jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak:8080/realms/lumina/protocol/openid-connect/certs}
             user-name-attribute: sub
 
+server:
+  port: 8080
   reactive:
     session:
       timeout: 30m
@@ -32,21 +34,18 @@ spring:
         http-only: true
         secure: ${COOKIE_SECURE:false}
         same-site: Lax
-
-server:
-  port: 8080
+        path: /
 
 management:
   endpoints:
     web:
-      base-path: /
+      base-path: /actuator
       exposure:
         include: health
   endpoint:
     health:
       show-details: never
 
-# BFF独自のアプリケーション設定（環境変数から注入）
 app:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
   bff-origin: ${BFF_ORIGIN:http://localhost:8080}
