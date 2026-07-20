@@ -19,5 +19,5 @@ data class AppProperties(
     /** APIサーバーのベースURL */
     val apiBaseUrl: String,
     /** KeycloakのログアウトURL */
-    val keycloakLogoutUrl: String
+    val keycloakLogoutUrl: String,
 )

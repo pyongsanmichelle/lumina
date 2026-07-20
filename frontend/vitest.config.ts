@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitest/config'
-import vue from '@vitejs/plugin-vue'
-import { resolve } from 'node:path'
+import { defineConfig } from 'vitest/config';
+import vue from '@vitejs/plugin-vue';
+import { resolve } from 'node:path';
 
 export default defineConfig({
   plugins: [vue()],
@@ -8,6 +8,10 @@ export default defineConfig({
     alias: {
       '~': resolve(__dirname, './app'),
     },
+  },
+  define: {
+    'import.meta.server': 'globalThis.__IMPORT_META_SERVER__',
+    'import.meta.client': 'globalThis.__IMPORT_META_CLIENT__',
   },
   test: {
     environment: 'happy-dom',
@@ -33,8 +37,10 @@ export default defineConfig({
         'app/components/SampleAreaChart.vue',
         'app/components/SampleBarChart.vue',
         'app/pages/sample-design.vue',
+        'app/middleware/auth.global.ts',
+        'app/composables/useBffAuthClient.ts',
       ],
-      exclude: [],
+      exclude: ['app/types/bff-auth.d.ts'],
       thresholds: {
         lines: 80,
         functions: 80,
@@ -45,4 +51,4 @@ export default defineConfig({
     },
     include: ['tests/**/*.{test,spec}.ts'],
   },
-})
+});

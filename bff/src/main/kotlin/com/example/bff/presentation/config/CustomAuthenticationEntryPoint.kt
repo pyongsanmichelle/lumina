@@ -1,5 +1,7 @@
 package com.example.bff.presentation.config
 
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.AuthenticationException
@@ -9,24 +11,25 @@ import reactor.core.publisher.Mono
 
 /**
  * 未認証アクセス時に 401 Unauthorized を返すカスタムエントリポイント。
- * 
+ *
  * [背景・目的]
  * Spring Securityのデフォルト挙動（ログイン画面への302リダイレクトなど）を防ぎ、
  * フロントエンド(SPA)がエラーを直接ハンドリングできるようJSONレスポンスを返す。
- * 
+ *
  * [利用シーン]
  * - 未ログイン状態での保護エンドポイントへのアクセス
  * - セッションタイムアウト、またはアクセストークンの失効
  *
  * [レスポンス形式]
  * ```json
- * { 
- *   "authenticated": false, 
- *   "message": "Unauthorized" 
+ * {
+ *   "authenticated": false,
+ *   "message": "Unauthorized"
  * }
  * ```
  */
 class CustomAuthenticationEntryPoint : ServerAuthenticationEntryPoint {
+    private val log = LoggerFactory.getLogger(CustomAuthenticationEntryPoint::class.java)
 
     /**
      * 認証に失敗、または未認証の状態でアクセスがあった際にSpring Securityから呼び出される処理。
@@ -38,11 +41,20 @@ class CustomAuthenticationEntryPoint : ServerAuthenticationEntryPoint {
      */
     override fun commence(
         exchange: ServerWebExchange,
-        exception: AuthenticationException
+        exception: AuthenticationException,
     ): Mono<Void> {
+        log.info(
+            "Authentication failed. path={} trace_id={} user_id={} exception={}: {}",
+            exchange.request.path,
+            MDC.get("trace_id") ?: "no-trace",
+            MDC.get("user_id") ?: "anonymous",
+            exception::class.java.name,
+            exception.message,
+        )
+
         // レスポンスオブジェクトの取得
         val response = exchange.response
-        
+
         // HTTPステータスコードを 401 (Unauthorized) に設定
         response.statusCode = HttpStatus.UNAUTHORIZED
         // フロントエンドがJSONとして解釈できるようにContent-Typeを指定

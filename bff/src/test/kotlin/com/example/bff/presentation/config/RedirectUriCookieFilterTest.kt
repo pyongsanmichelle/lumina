@@ -13,23 +13,26 @@ import reactor.test.StepVerifier
 
 /**
  * [RedirectUriCookieFilter] のテストクラス。
- * 
+ *
  * ログイン成功後のリダイレクト先を制御するCookieの発行ロジックと、
  * オープンリダイレクト攻撃に対するバリデーションが正しく機能することを検証します。
  */
 class RedirectUriCookieFilterTest {
-
-    private val appProperties = AppProperties(
-        frontendOrigin = "http://localhost:3000",
-        bffOrigin = "http://localhost:8080",
-        apiBaseUrl = "http://api:8080",
-        keycloakLogoutUrl = "http://keycloak:8080/realms/lumina/protocol/openid-connect/logout"
-    )
+    private val appProperties =
+        AppProperties(
+            frontendOrigin = "http://localhost:3000",
+            bffOrigin = "http://localhost:8080",
+            apiBaseUrl = "http://api:8080",
+            keycloakLogoutUrl = "http://keycloak:8080/realms/lumina/protocol/openid-connect/logout",
+        )
 
     private val filter = RedirectUriCookieFilter(appProperties)
 
     /** リクエスト交換オブジェクトの生成ヘルパー */
-    private fun createExchange(path: String, redirectUri: String? = null): MockServerWebExchange {
+    private fun createExchange(
+        path: String,
+        redirectUri: String? = null,
+    ): MockServerWebExchange {
         val builder = MockServerHttpRequest.get(path)
         if (redirectUri != null) builder.queryParam("redirect_uri", redirectUri)
         return MockServerWebExchange.from(builder.build())
@@ -63,14 +66,15 @@ class RedirectUriCookieFilterTest {
     @DisplayName("不正な redirect_uri の場合 Cookie が保存されないこと（バリデーション確認）")
     fun filter_invalidRedirectUri_doesNotSaveCookie() {
         // 不正なパターンのリスト
-        val invalidUris = listOf(
-            "dashboard",           // / で始まらない
-            "//evil.com",          // プロトコル相対
-            "http://evil.com",     // 絶対パス
-            "https://evil.com",
-            "/\\evil.com",         // バックスラッシュ
-            "/\npath"              // 制御文字
-        )
+        val invalidUris =
+            listOf(
+                "dashboard", // / で始まらない
+                "//evil.com", // プロトコル相対
+                "http://evil.com", // 絶対パス
+                "https://evil.com",
+                "/\\evil.com", // バックスラッシュ
+                "/\npath", // 制御文字
+            )
 
         invalidUris.forEach { uri ->
             val exchange = createExchange("/oauth2/authorization/keycloak", uri)

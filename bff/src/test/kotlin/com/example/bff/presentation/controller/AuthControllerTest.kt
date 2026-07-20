@@ -12,13 +12,12 @@ import reactor.test.StepVerifier
 
 /**
  * [AuthController] のテストクラス。
- * 
+ *
  * セキュリティコンテキストから取得したユーザー情報が、
  * APIレスポンスとして正しくマッピングされるかを検証します。
  */
 @ExtendWith(MockitoExtension::class)
 class AuthControllerTest {
-
     private val controller = AuthController()
 
     /**
@@ -35,22 +34,22 @@ class AuthControllerTest {
         Mockito.`when`(principal.authorities).thenReturn(
             listOf(
                 SimpleGrantedAuthority("ROLE_USER"),
-                SimpleGrantedAuthority("ROLE_ADMIN")
-            )
+                SimpleGrantedAuthority("ROLE_ADMIN"),
+            ),
         )
 
         // Act: コントローラーメソッドの呼び出し
         val result = controller.getAuthStatus(principal)
 
         // Assert: レスポンス内容の検証（AssertJを使用）
-        StepVerifier.create(result)
+        StepVerifier
+            .create(result)
             .assertNext { response ->
                 assertThat(response.authenticated).isTrue()
                 assertThat(response.userId).isEqualTo("user-123")
                 assertThat(response.username).isEqualTo("testuser")
                 assertThat(response.roles).containsExactly("ROLE_USER", "ROLE_ADMIN")
-            }
-            .verifyComplete()
+            }.verifyComplete()
     }
 
     /**
@@ -64,13 +63,13 @@ class AuthControllerTest {
         val result = controller.getAuthStatus(null)
 
         // Assert
-        StepVerifier.create(result)
+        StepVerifier
+            .create(result)
             .assertNext { response ->
                 assertThat(response.authenticated).isFalse()
                 assertThat(response.userId).isNull()
                 assertThat(response.username).isNull()
                 assertThat(response.roles).isNull()
-            }
-            .verifyComplete()
+            }.verifyComplete()
     }
 }

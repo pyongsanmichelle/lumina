@@ -13,7 +13,11 @@ services:
     command: ["postgres", "-c", "timezone=Asia/Tokyo"]
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-luminar}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-luminar} -d ${DB_NAME:-lumina}"
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

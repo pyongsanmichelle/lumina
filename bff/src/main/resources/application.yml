@@ -14,7 +14,7 @@ spring:
             client-id: lumina-bff
             client-secret: ${KEYCLOAK_CLIENT_SECRET}
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
             scope: openid, profile, email
         provider:
           keycloak:
@@ -22,7 +22,10 @@ spring:
             token-uri: ${KEYCLOAK_TOKEN_URI:http://keycloak:8080/realms/lumina/protocol/openid-connect/token}
             user-info-uri: ${KEYCLOAK_USER_INFO_URI:http://keycloak:8080/realms/lumina/protocol/openid-connect/userinfo}
             jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak:8080/realms/lumina/protocol/openid-connect/certs}
+            user-name-attribute: sub
 
+server:
+  port: 8080
   reactive:
     session:
       timeout: 30m
@@ -31,21 +34,18 @@ spring:
         http-only: true
         secure: ${COOKIE_SECURE:false}
         same-site: Lax
-
-server:
-  port: 8080
+        path: /
 
 management:
   endpoints:
     web:
-      base-path: /
+      base-path: /actuator
       exposure:
         include: health
   endpoint:
     health:
       show-details: never
 
-# BFF独自のアプリケーション設定（環境変数から注入）
 app:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
   bff-origin: ${BFF_ORIGIN:http://localhost:8080}

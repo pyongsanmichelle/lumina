@@ -14,12 +14,11 @@ import org.springframework.web.reactive.function.client.WebClient
  */
 @Configuration
 class WebClientConfig(
-    private val appProperties: AppProperties
+    private val appProperties: AppProperties,
 ) {
-
     /**
      * API通信用の [WebClient] インスタンスを生成して Bean として登録します。
-     * 
+     *
      * Spring Boot が提供する [WebClient.Builder] を注入することで、
      * 共通の設定やフィルタリングを適用しやすい柔軟な構成にしています。
      *
@@ -27,9 +26,8 @@ class WebClientConfig(
      * @return 構築済みの [WebClient] インスタンス
      */
     @Bean
-    fun apiWebClient(builder: WebClient.Builder): WebClient {
-        return builder
+    fun apiWebClient(builder: WebClient.Builder): WebClient =
+        builder
             .baseUrl(appProperties.apiBaseUrl)
             .build()
-    }
 }

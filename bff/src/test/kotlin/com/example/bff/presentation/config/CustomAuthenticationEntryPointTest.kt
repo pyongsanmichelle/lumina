@@ -14,12 +14,11 @@ import java.nio.charset.StandardCharsets
 
 /**
  * [CustomAuthenticationEntryPoint] のテストクラス。
- * 
+ *
  * 未認証アクセスが発生した際に、適切な HTTP ステータスコード（401）と
  * APIとしてのレスポンス形式（JSON）が返却されることを検証します。
  */
 class CustomAuthenticationEntryPointTest {
-
     private val entryPoint = CustomAuthenticationEntryPoint()
 
     /**
@@ -39,29 +38,30 @@ class CustomAuthenticationEntryPointTest {
 
         // Assert (検証)
         // 非同期処理が完了するまで待機
-        StepVerifier.create(result)
+        StepVerifier
+            .create(result)
             .verifyComplete()
 
         // レスポンスの検証
         val response = exchange.response
-        
+
         // ステータスコードが 401 であること
         assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
-        
+
         // Content-Type が application/json であること
         assertThat(response.headers.contentType).isEqualTo(MediaType.APPLICATION_JSON)
 
         // ボディ内容の検証: JSON文字列が一致するか確認
         val bodyContent = response.body
-        StepVerifier.create(bodyContent)
+        StepVerifier
+            .create(bodyContent)
             .consumeNextWith { dataBuffer ->
                 val bytes = ByteArray(dataBuffer.readableByteCount())
                 dataBuffer.read(bytes)
                 val json = String(bytes, StandardCharsets.UTF_8)
-                
+
                 // 期待されるJSON構造と比較
                 assertThat(json).isEqualTo("""{"authenticated":false,"message":"Unauthorized"}""")
-            }
-            .verifyComplete()
+            }.verifyComplete()
     }
 }
