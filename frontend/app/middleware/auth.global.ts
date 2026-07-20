@@ -28,7 +28,7 @@ export default defineNuxtRouteMiddleware(async (to: any) => {
   }
 
   const redirectUri = encodeURIComponent(to.fullPath);
-  const loginUrl = `${bffOrigin}/oauth2/authorization/keycloak?redirect_uri=${redirectUri}`;
+  const loginUrl = `${bffOrigin}/bff/oauth2/authorization/keycloak?redirect_uri=${redirectUri}`;
 
   if (process.server) {
     // SSR: navigateTo が 302 相当のリダイレクト応答を組み立てる

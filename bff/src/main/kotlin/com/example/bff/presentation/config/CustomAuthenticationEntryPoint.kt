@@ -65,7 +65,7 @@ class CustomAuthenticationEntryPoint : ServerAuthenticationEntryPoint {
 
         // 独自にファクトリを生成するのではなく、レスポンスが持っているサーバー最適化済みのファクトリを利用する
         val dataBuffer = response.bufferFactory().wrap(body.toByteArray(Charsets.UTF_8))
-        
+
         // レスポンスのボディにデータを書き込み、非同期処理の完了(Mono<Void>)として返却する
         return response.writeWith(Mono.just(dataBuffer))
     }
