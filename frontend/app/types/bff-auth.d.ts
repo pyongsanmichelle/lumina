@@ -23,4 +23,24 @@ export interface paths {
       };
     };
   };
+  '/bff/logout': {
+    post: {
+      requestHeaders: {
+        'X-XSRF-TOKEN': string;
+      };
+      responses: {
+        204: {
+          content: never;
+        };
+        401: {
+          content: {
+            'application/json': {
+              authenticated: false;
+              message: string;
+            };
+          };
+        };
+      };
+    };
+  };
 }

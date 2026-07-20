@@ -6,6 +6,34 @@ info:
     docs/auth/oidc_flow.md 4.3節に基づく、認証状態確認エンドポイントの
     フロントエンド型生成専用のOpenAPI定義。BFF実装の正式仕様書ではない。
 paths:
+  /bff/logout:
+    post:
+      operationId: logout
+      summary: ログアウト
+      security:
+        - cookieAuth: []
+      requestHeaders:
+        - name: X-XSRF-TOKEN
+          description: CSRFトークン
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ログアウト成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authenticated, message]
+                properties:
+                  authenticated:
+                    type: boolean
+                    enum: [false]
+                  message:
+                    type: string
   /bff/auth/me:
     get:
       operationId: getAuthMe

@@ -1,6 +1,6 @@
 <template>
   <div class="flex min-h-screen" style="background: #f8fafc">
-    <SampleSidebar :current-page="pageName" @navigate="onNavigate" />
+    <Sidebar :current-page="pageName" @navigate="onNavigate" />
     <SampleHeader :current-page="pageName" />
     <main class="flex-1 overflow-y-auto" style="margin-left: 240px; padding-top: 56px">
       <slot />
@@ -9,13 +9,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps<{
-  pageName?: string
-}>()
+  pageName?: string;
+}>();
 
-const pageName = computed<string>(() => props.pageName || '')
+const pageName = computed<string>(() => props.pageName || '');
 
 function onNavigate(page: string) {
   // レイアウト自体ではページ遷移の状態管理を持たない
