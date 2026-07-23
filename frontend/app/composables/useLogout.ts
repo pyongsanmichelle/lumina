@@ -1,44 +1,56 @@
-function getCookieValue(name: string): string {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? decodeURIComponent(match[2]!) : '';
-}
-
 /**
- * ログアウトを実行する composable。
+ * OIDC / BFF パターンにおけるログアウト処理を担当する Composable。
  *
- * 従来のXHR（openapi-fetch）方式は、BFFが返す302リダイレクトをJavaScriptが
- * 追跡してしまう問題がありました（opaque redirect となりLocationヘッダも読めない）。
- * この問題を解決するため、hiddenフォームを動的に生成してブラウザのトップレベル
- * ナビゲーションとして POST /bff/logout に submit します。
+ * 【背景と設計ポイント】
+ * Fetch や XHR で POST /bff/logout を呼び出すと、BFF が返す IdP (Keycloak等) の
+ * end_session_endpoint への 302 リダイレクトを JavaScript 側で処理してしまい、
+ * opaque redirect や CORS エラー、Cookie が破棄されない問題が発生します。
  *
- * ブラウザはBFFから302 → Keycloakのend_session_endpoint → post_logout_redirect_uri
- * （フロントエンドトップ）までを自らナビゲーションするため、
- * 全てのセッションCookieが正しく破棄されます。
- *
- * CSRFトークンは、XSRF-TOKEN Cookie の値を hidden input（name="_csrf"）として
- * フォームに埋め込みます。
- * BFF側では ServerCsrfTokenRequestAttributeHandler を使用しているため、
- * 生のトークン値がそのまま検証されます。
+ * そのため、本 Composable では hidden フォームを動的に生成してトップレベルナビゲーションとして
+ * POST 送信します。ブラウザ自身にリダイレクトチェーンを追跡させることで、
+ * 全てのセッション Cookie を確実に破棄します。
  */
 export function useLogout() {
-  function logout(): void {
-    const csrfToken = getCookieValue('XSRF-TOKEN');
+  // Nuxt コンテキストを正常に保持するため、Composable のトップレベルで呼び出します。
+  // useCookie は Cookie の検索および URL デコードを自動で行ってくれます。
+  const xsrfCookie = useCookie('XSRF-TOKEN');
 
+  /**
+   * ログアウト処理を実行します。
+   */
+  function logout(): void {
+    // SSR (サーバーサイドレンダリング) 時のエラーガード
+    // document などの DOM API アクセスによる Node.js 側のクラッシュを防ぎます。
+    if (!import.meta.client) return;
+
+    // Cookie から CSRF トークンを取得
+    const xsrfToken = xsrfCookie.value;
+
+    if (!xsrfToken) {
+      console.warn(
+        'XSRF-TOKEN cookie が見つかりません。BFF側でCSRF検証エラーになる可能性があります。'
+      );
+    }
+
+    // 送信用 hidden フォームの動的生成
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '/bff/logout';
     form.style.display = 'none';
 
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = '_csrf';
-    csrfInput.value = csrfToken;
-    form.appendChild(csrfInput);
+    // CSRF トークンを hidden input として追加
+    // Spring Boot 側の ServerCsrfTokenRequestAttributeHandler により `_csrf` パラメータが検証されます。
+    if (xsrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = '_csrf';
+      csrfInput.value = xsrfToken;
+      form.appendChild(csrfInput);
+    }
 
+    // DOM に追加してフォームを送信
     document.body.appendChild(form);
     form.submit();
-    // form.submit() 後はブラウザがナビゲーションを行うため、
-    // 以降のJavaScript処理は実行されない（ページ遷移する）
   }
 
   return {

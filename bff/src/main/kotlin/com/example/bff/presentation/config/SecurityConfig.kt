@@ -11,11 +11,16 @@ import org.springframework.security.oauth2.client.web.server.DefaultServerOAuth2
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.logout.SecurityContextServerLogoutHandler
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository
+import org.springframework.security.web.server.csrf.CsrfToken
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.CorsConfigurationSource
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
+import org.springframework.web.server.ServerWebExchange
+import org.springframework.web.server.WebFilter
+import org.springframework.web.server.WebFilterChain
+import reactor.core.publisher.Mono
 
 /**
  * BFF（Backend For Frontend）のセキュリティ設定クラス。
@@ -37,13 +42,6 @@ class SecurityConfig(
 ) {
     /**
      * セキュリティフィルターチェーンを構築します。
-     *
-     * 本設定により、以下のセキュリティ層が適用されます。
-     * 1. OAuth2 認証フロー
-     * 2. ログアウト処理
-     * 3. CSRF/CORS 対策
-     * 4. 認証失敗時のエラー制御
-     * 5. エンドポイントごとの認可ルール
      *
      * @param http Spring Securityのビルダークラス
      * @return 構成済みのフィルターチェーン
@@ -72,7 +70,7 @@ class SecurityConfig(
                     response.headers.contentType = org.springframework.http.MediaType.APPLICATION_JSON
                     val body = """{"error":"${exception.javaClass.simpleName}","message":"${exception.message}"}"""
                     val buffer = response.bufferFactory().wrap(body.toByteArray(Charsets.UTF_8))
-                    response.writeWith(reactor.core.publisher.Mono.just(buffer))
+                    response.writeWith(Mono.just(buffer))
                 }
             }
             // ログアウトの設定
@@ -91,11 +89,7 @@ class SecurityConfig(
                         setCookiePath("/")
                     },
                 )
-                // XorServerCsrfTokenRequestAttributeHandler（デフォルト）では、
-                // Cookieの生トークン値をヘッダ/パラメータで送信しても検証が通らないため、
-                // 生トークンをそのまま受け付けるServerCsrfTokenRequestAttributeHandlerに変更する。
-                // これにより、hiddenフォームの _csrf パラメータ（フォームPOST方式）と
-                // X-XSRF-TOKEN ヘッダ（XHR方式）の両方で生トークンによるCSRF検証が可能になる。
+                // 生トークンをそのまま受け付けるServerCsrfTokenRequestAttributeHandlerに変更
                 csrf.csrfTokenRequestHandler(ServerCsrfTokenRequestAttributeHandler())
             }
             // CORS 設定
@@ -109,8 +103,8 @@ class SecurityConfig(
             }
             // アクセス制御ルールの設定
             .authorizeExchange { authorize ->
-                // ヘルスチェック、認証エンドポイント、ログイン・ログアウト関連は認証不要
-                authorize.pathMatchers("/health", "/oauth2/**", "/login/**", "/logout").permitAll()
+                // ヘルスチェック(actuator)、認証エンドポイント、ログイン・ログアウト関連は認証不要
+                authorize.pathMatchers("/actuator/**", "/oauth2/**", "/login/**", "/logout").permitAll()
                 // 上記以外はすべて認証が必要
                 authorize.anyExchange().authenticated()
             }
@@ -121,8 +115,18 @@ class SecurityConfig(
             ).build()
 
     /**
+     * WebFlux の CSRF トークン遅延評価を回避し、常に XSRF-TOKEN Cookie を発行・更新させるフィルター。
+     */
+    @Bean
+    fun csrfCookieWebFilter(): WebFilter {
+        return WebFilter { exchange: ServerWebExchange, chain: WebFilterChain ->
+            val csrfTokenMono = exchange.getAttribute<Mono<CsrfToken>>(CsrfToken::class.java.name)
+            csrfTokenMono?.then(chain.filter(exchange)) ?: chain.filter(exchange)
+        }
+    }
+
+    /**
      * CORSの設定を構築します。
-     * フロントエンド（SPA）からのクレデンシャル付きリクエスト（Cookie等の送信）を許可します。
      *
      * @return 設定済みのCORSソース
      */
