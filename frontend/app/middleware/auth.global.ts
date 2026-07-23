@@ -1,4 +1,3 @@
-// app/middleware/auth.global.ts
 export default defineNuxtRouteMiddleware(async (to: any) => {
   const config = useRuntimeConfig();
   const bffOrigin = config.public.bffOrigin as string;
@@ -21,7 +20,9 @@ export default defineNuxtRouteMiddleware(async (to: any) => {
     return;
   }
 
-  const status = response?.status ?? (error as Record<string, unknown>).status;
+  // 各種エラーレスポンス形式（response.status / error.status / error.statusCode / error.response.status）に対応
+  const err = error as Record<string, any>;
+  const status = response?.status ?? err?.status ?? err?.statusCode ?? err?.response?.status;
 
   if (status !== 401) {
     return;

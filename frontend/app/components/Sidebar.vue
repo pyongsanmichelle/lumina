@@ -59,6 +59,7 @@
           <div class="text-xs truncate" style="color: #64748b">管理者</div>
         </div>
         <button
+          data-testid="power-button"
           class="text-xs transition-colors"
           style="color: #64748b"
           @click="showLogoutMenu = !showLogoutMenu"
@@ -72,11 +73,13 @@
       <!-- Logout Popover -->
       <div
         v-if="showLogoutMenu"
+        data-testid="logout-popover"
         class="absolute bottom-14 right-4 w-40 rounded-md shadow-lg"
         style="background: #1e293b; z-index: 60"
         @mouseleave="showLogoutMenu = false"
       >
         <button
+          data-testid="logout-button"
           class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
           @click="handleLogout"
         >
@@ -89,6 +92,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+import { useLogout } from '~/composables/useLogout';
 import type { SamplePage } from '~/types/sample';
 
 interface Props {

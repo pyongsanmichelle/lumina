@@ -23,7 +23,7 @@ describe('Sidebar', () => {
     const wrapper = mount(Sidebar, {
       props: { currentPage: 'dashboard' },
     });
-    const powerButton = wrapper.find('button:contains("⏻")');
+    const powerButton = wrapper.find('[data-testid="power-button"]');
     await powerButton.trigger('click');
     expect(wrapper.find('[data-testid="logout-popover"]').exists()).toBe(true);
   });
@@ -34,9 +34,9 @@ describe('Sidebar', () => {
     const wrapper = mount(Sidebar, {
       props: { currentPage: 'dashboard' },
     });
-    const powerButton = wrapper.find('button:contains("⏻")');
+    const powerButton = wrapper.find('[data-testid="power-button"]');
     await powerButton.trigger('click');
-    const logoutButton = wrapper.find('button:contains("ログアウト")');
+    const logoutButton = wrapper.find('[data-testid="logout-button"]');
     await logoutButton.trigger('click');
     expect(mockLogout).toHaveBeenCalledTimes(1);
   });

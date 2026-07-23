@@ -76,7 +76,7 @@ describe('auth.global middleware (SSR)', () => {
 
     expect(mockNavigateTo).toHaveBeenCalledTimes(1);
     const calledUrl = mockNavigateTo.mock.calls[0][0];
-    expect(calledUrl).toContain(`${CSR_BFF_ORIGIN}/oauth2/authorization/keycloak`);
+    expect(calledUrl).toContain(`${CSR_BFF_ORIGIN}/bff/oauth2/authorization/keycloak`);
     expect(calledUrl).toContain('redirect_uri=%2Fdashboard');
     expect(mockNavigateTo.mock.calls[0][1]).toEqual({ external: true });
   });
@@ -179,7 +179,7 @@ describe('auth.global middleware (CSR)', () => {
     const to = { fullPath: '/dashboard' };
     await mw(to);
 
-    expect(window.location.href).toContain(`${CSR_BFF_ORIGIN}/bff/login`);
+    expect(window.location.href).toContain(`${CSR_BFF_ORIGIN}/bff/oauth2/authorization/keycloak`);
     expect(window.location.href).toContain('redirect_uri=%2Fdashboard');
   });
 });

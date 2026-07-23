@@ -1,6 +1,6 @@
 /**
  * OIDC / BFF パターンにおけるログアウト処理を担当する Composable。
- *
+ * *
  * 【背景と設計ポイント】
  * Fetch や XHR で POST /bff/logout を呼び出すと、BFF が返す IdP (Keycloak等) の
  * end_session_endpoint への 302 リダイレクトを JavaScript 側で処理してしまい、
@@ -20,11 +20,12 @@ export function useLogout() {
    */
   function logout(): void {
     // SSR (サーバーサイドレンダリング) 時のエラーガード
-    // document などの DOM API アクセスによる Node.js 側のクラッシュを防ぎます。
-    if (!import.meta.client) return;
+    // Nuxtのビルド環境(import.meta.client)と単体テスト(JSDOM)の両方で安全に判定する
+    const isClient = import.meta.client ?? typeof window !== 'undefined';
+    if (!isClient) return;
 
     // Cookie から CSRF トークンを取得
-    const xsrfToken = xsrfCookie.value;
+    const xsrfToken = xsrfCookie.value ?? '';
 
     if (!xsrfToken) {
       console.warn(
@@ -39,14 +40,11 @@ export function useLogout() {
     form.style.display = 'none';
 
     // CSRF トークンを hidden input として追加
-    // Spring Boot 側の ServerCsrfTokenRequestAttributeHandler により `_csrf` パラメータが検証されます。
-    if (xsrfToken) {
-      const csrfInput = document.createElement('input');
-      csrfInput.type = 'hidden';
-      csrfInput.name = '_csrf';
-      csrfInput.value = xsrfToken;
-      form.appendChild(csrfInput);
-    }
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_csrf';
+    csrfInput.value = xsrfToken;
+    form.appendChild(csrfInput);
 
     // DOM に追加してフォームを送信
     document.body.appendChild(form);
