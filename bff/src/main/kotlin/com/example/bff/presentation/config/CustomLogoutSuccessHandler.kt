@@ -1,6 +1,5 @@
 package com.example.bff.presentation.config
 
-import com.example.bff.integration.client.KeycloakLogoutClient
 import com.example.bff.integration.config.AppProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -20,12 +19,16 @@ import reactor.core.publisher.Mono
  * Keycloak（OpenID Provider）側のセッションも確実に破棄させるため、
  * Keycloakの `end_session_endpoint` へリダイレクトするレスポンスを生成します。
  *
+ * 本実装ではフロントチャネル（ブラウザリダイレクト）のみを使用し、
+ * バックチャネル（サーバー間HTTP通信）は行いません。
+ * ブラウザがKeycloakのログアウトURLに直接リダイレクトされることで、
+ * Keycloak側のセッションCookieも同時に破棄されます。
+ *
  * @property appProperties アプリケーション設定（KeycloakのログアウトURLやフロントエンドのオリジンを保持）
  */
 @Component
 class CustomLogoutSuccessHandler(
     private val appProperties: AppProperties,
-    private val keycloakLogoutClient: KeycloakLogoutClient,
 ) : ServerLogoutSuccessHandler {
     private val log = LoggerFactory.getLogger(CustomLogoutSuccessHandler::class.java)
 
@@ -62,46 +65,27 @@ class CustomLogoutSuccessHandler(
                     oidcUser?.idToken?.tokenValue
                 }
 
-        // バックチャネルで Keycloak のログアウトを実行し、完了後にフロントエンドへリダイレクト
-        return keycloakLogoutClient.logout(idToken, redirectUri)
-            .doOnSuccess {
-                log.info(
-                    "CustomLogoutSuccessHandler.onLogoutSuccess Keycloak logout success. traceId={}",
-                    traceId,
-                )
-            }
-            .doOnError { e ->
-                log.warn(
-                    "CustomLogoutSuccessHandler.onLogoutSuccess Keycloak logout failed. traceId={} error={}",
-                    traceId,
-                    e.message,
-                )
-            }
-            .then(
-                Mono.defer {
-                    val redirectLocation =
-                        UriComponentsBuilder
-                            .fromUriString(appProperties.keycloakLogoutUrl)
-                            .queryParam("post_logout_redirect_uri", redirectUri)
-                            .apply {
-                                if (idToken != null) {
-                                    queryParam("id_token_hint", idToken)
-                                }
-                            }.build()
-                            .toUri()
+        val redirectLocation =
+            UriComponentsBuilder
+                .fromUriString(appProperties.keycloakLogoutUrl)
+                .queryParam("post_logout_redirect_uri", redirectUri)
+                .apply {
+                    if (idToken != null) {
+                        queryParam("id_token_hint", idToken)
+                    }
+                }.build()
+                .toUri()
 
-                    val response = webFilterExchange.exchange.response
-                    response.statusCode = HttpStatus.FOUND
-                    response.headers.location = redirectLocation
+        val response = webFilterExchange.exchange.response
+        response.statusCode = HttpStatus.FOUND
+        response.headers.location = redirectLocation
 
-                    log.info(
-                        "CustomLogoutSuccessHandler.onLogoutSuccess redirect. traceId={} redirectLocation={}",
-                        traceId,
-                        redirectLocation,
-                    )
+        log.info(
+            "CustomLogoutSuccessHandler.onLogoutSuccess redirect. traceId={} redirectLocation={}",
+            traceId,
+            redirectLocation,
+        )
 
-                    response.setComplete()
-                }
-            )
+        return response.setComplete()
     }
 }

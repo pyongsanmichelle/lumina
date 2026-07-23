@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.client.web.server.DefaultServerOAuth2
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.logout.SecurityContextServerLogoutHandler
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository
+import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.CorsConfigurationSource
@@ -78,7 +79,7 @@ class SecurityConfig(
             .logout { logout ->
                 // サーバー側の認証コンテキスト（セッション等）を破棄
                 logout.logoutHandler(SecurityContextServerLogoutHandler())
-                // Keycloak側でもログアウトを実行するカスタムハンドラ
+                // Keycloak側でもログアウトを実行するカスタムハンドラ（フロントチャネルリダイレクト）
                 logout.logoutSuccessHandler(customLogoutSuccessHandler)
                 logout.logoutUrl("/logout")
             }
@@ -90,6 +91,12 @@ class SecurityConfig(
                         setCookiePath("/")
                     },
                 )
+                // XorServerCsrfTokenRequestAttributeHandler（デフォルト）では、
+                // Cookieの生トークン値をヘッダ/パラメータで送信しても検証が通らないため、
+                // 生トークンをそのまま受け付けるServerCsrfTokenRequestAttributeHandlerに変更する。
+                // これにより、hiddenフォームの _csrf パラメータ（フォームPOST方式）と
+                // X-XSRF-TOKEN ヘッダ（XHR方式）の両方で生トークンによるCSRF検証が可能になる。
+                csrf.csrfTokenRequestHandler(ServerCsrfTokenRequestAttributeHandler())
             }
             // CORS 設定
             .cors { cors ->

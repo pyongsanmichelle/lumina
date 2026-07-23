@@ -3,25 +3,42 @@ function getCookieValue(name: string): string {
   return match ? decodeURIComponent(match[2]!) : '';
 }
 
-import { createBffAuthClient } from './useBffAuthClient';
-
+/**
+ * ログアウトを実行する composable。
+ *
+ * 従来のXHR（openapi-fetch）方式は、BFFが返す302リダイレクトをJavaScriptが
+ * 追跡してしまう問題がありました（opaque redirect となりLocationヘッダも読めない）。
+ * この問題を解決するため、hiddenフォームを動的に生成してブラウザのトップレベル
+ * ナビゲーションとして POST /bff/logout に submit します。
+ *
+ * ブラウザはBFFから302 → Keycloakのend_session_endpoint → post_logout_redirect_uri
+ * （フロントエンドトップ）までを自らナビゲーションするため、
+ * 全てのセッションCookieが正しく破棄されます。
+ *
+ * CSRFトークンは、XSRF-TOKEN Cookie の値を hidden input（name="_csrf"）として
+ * フォームに埋め込みます。
+ * BFF側では ServerCsrfTokenRequestAttributeHandler を使用しているため、
+ * 生のトークン値がそのまま検証されます。
+ */
 export function useLogout() {
-  const config = useRuntimeConfig();
-  const client = createBffAuthClient(config.public.bffOrigin, { credentials: 'include' });
+  function logout(): void {
+    const csrfToken = getCookieValue('XSRF-TOKEN');
 
-  async function logout() {
-    try {
-      const csrf = getCookieValue('XSRF-TOKEN');
-      const { error } = await client.post('/bff/logout', {
-        headers: { 'X-XSRF-TOKEN': csrf },
-      });
-      if (!error) {
-        window.location.href = '/';
-      }
-    } catch {
-      // バックチャネルログアウト失敗時もブラウザをルートへ遷移させる
-      window.location.href = '/';
-    }
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/bff/logout';
+    form.style.display = 'none';
+
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_csrf';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    document.body.appendChild(form);
+    form.submit();
+    // form.submit() 後はブラウザがナビゲーションを行うため、
+    // 以降のJavaScript処理は実行されない（ページ遷移する）
   }
 
   return {
