@@ -39,6 +39,7 @@ export default defineConfig({
         'app/pages/sample-design.vue',
         'app/middleware/auth.global.ts',
         'app/composables/useBffAuthClient.ts',
+        'app/composables/useLogout.ts',
       ],
       exclude: ['app/types/bff-auth.d.ts'],
       thresholds: {
