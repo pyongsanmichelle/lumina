@@ -3,14 +3,17 @@ package com.example.bff.presentation.config
 import com.example.bff.integration.config.AppProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseCookie
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.security.web.server.WebFilterExchange
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler
 import org.springframework.stereotype.Component
 import org.springframework.web.util.UriComponentsBuilder
 import reactor.core.publisher.Mono
+import java.time.Duration
 
 /**
  * カスタムログアウト成功ハンドラ (RP-Initiated Logout対応)。
@@ -29,6 +32,7 @@ import reactor.core.publisher.Mono
 @Component
 class CustomLogoutSuccessHandler(
     private val appProperties: AppProperties,
+    private val clientRegistrationRepository: ReactiveClientRegistrationRepository,
 ) : ServerLogoutSuccessHandler {
     private val log = LoggerFactory.getLogger(CustomLogoutSuccessHandler::class.java)
 
@@ -50,8 +54,11 @@ class CustomLogoutSuccessHandler(
             "CustomLogoutSuccessHandler.onLogoutSuccess start. traceId={} userId={} authenticationPrincipal={}",
             traceId,
             userId,
-            authentication.name,
+            authentication?.name ?: "anonymous",
         )
+
+        val exchange = webFilterExchange.exchange
+        val response = exchange.response
 
         // Keycloakでのログアウト完了後に戻ってくる、フロントエンドのURLを定義
         val redirectUri = "${appProperties.frontendOrigin}/"
@@ -60,32 +67,61 @@ class CustomLogoutSuccessHandler(
         // どのセッションを終了させるかをKeycloakに伝えるために必要（無い場合はnullになる）
         val idToken =
             (authentication as? OAuth2AuthenticationToken)
-                ?.let { token ->
-                    val oidcUser = token.principal as? OidcUser
-                    oidcUser?.idToken?.tokenValue
+                ?.let { token -> (token.principal as? OidcUser)?.idToken?.tokenValue }
+
+        return clientRegistrationRepository
+            .findByRegistrationId("keycloak")
+            .doOnNext { registration ->
+                if (idToken == null) {
+                    // id_token_hint が無いと Keycloak がログアウト確認画面を出し、
+                    // 結果としてSSOセッションが終了しないまま画面が進んでしまうことがある
+                    log.warn(
+                        "id_token_hint is missing. traceId={} Keycloak may not silently terminate the SSO session.",
+                        traceId,
+                    )
                 }
+            }.map { registration ->
+                UriComponentsBuilder
+                    .fromUriString(appProperties.keycloakLogoutUrl)
+                    .queryParam("post_logout_redirect_uri", redirectUri)
+                    .queryParam("client_id", registration.clientId)
+                    .apply {
+                        if (idToken != null) {
+                            queryParam("id_token_hint", idToken)
+                        }
+                    }.build()
+                    .encode() // id_token_hint(JWT)や redirect_uri を確実にパーセントエンコード
+                    .toUri()
+            }.flatMap { redirectLocation ->
+                val removeSessionCookie =
+                    ResponseCookie
+                        .from("SESSION", "")
+                        .maxAge(Duration.ZERO)
+                        .path("/")
+                        .httpOnly(true)
+                        .sameSite("Lax")
+                        .build()
 
-        val redirectLocation =
-            UriComponentsBuilder
-                .fromUriString(appProperties.keycloakLogoutUrl)
-                .queryParam("post_logout_redirect_uri", redirectUri)
-                .apply {
-                    if (idToken != null) {
-                        queryParam("id_token_hint", idToken)
-                    }
-                }.build()
-                .toUri()
+                val removeXsrfCookie =
+                    ResponseCookie
+                        .from("XSRF-TOKEN", "")
+                        .maxAge(Duration.ZERO)
+                        .path("/")
+                        .httpOnly(false)
+                        .build()
 
-        val response = webFilterExchange.exchange.response
-        response.statusCode = HttpStatus.FOUND
-        response.headers.location = redirectLocation
+                response.addCookie(removeSessionCookie)
+                response.addCookie(removeXsrfCookie)
+                response.statusCode = HttpStatus.FOUND
+                response.headers.location = redirectLocation
 
-        log.info(
-            "CustomLogoutSuccessHandler.onLogoutSuccess redirect. traceId={} redirectLocation={}",
-            traceId,
-            redirectLocation,
-        )
+                log.info(
+                    "CustomLogoutSuccessHandler.onLogoutSuccess redirect. traceId={} redirectLocation={}",
+                    traceId,
+                    redirectLocation,
+                )
 
-        return response.setComplete()
+                response.setComplete()
+            }
     }
 }

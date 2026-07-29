@@ -30,5 +30,4 @@ class WebClientConfig(
         builder
             .baseUrl(appProperties.apiBaseUrl)
             .build()
-
 }

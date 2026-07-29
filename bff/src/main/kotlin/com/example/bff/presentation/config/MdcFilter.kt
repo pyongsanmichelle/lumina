@@ -25,8 +25,7 @@ class MdcFilter : WebFilter {
                 MDC.put("trace_id", traceId)
                 MDC.put("user_id", "anonymous")
                 chain.filter(exchange)
-            }
-            .doFinally {
+            }.doFinally {
                 MDC.remove("trace_id")
                 MDC.remove("user_id")
             }

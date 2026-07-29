@@ -9,7 +9,9 @@ import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository
 import org.springframework.security.oauth2.client.web.server.DefaultServerOAuth2AuthorizationRequestResolver
 import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.security.web.server.authentication.logout.DelegatingServerLogoutHandler
 import org.springframework.security.web.server.authentication.logout.SecurityContextServerLogoutHandler
+import org.springframework.security.web.server.authentication.logout.WebSessionServerLogoutHandler
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository
 import org.springframework.security.web.server.csrf.CsrfToken
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler
@@ -75,9 +77,12 @@ class SecurityConfig(
             }
             // ログアウトの設定
             .logout { logout ->
-                // サーバー側の認証コンテキスト（セッション等）を破棄
-                logout.logoutHandler(SecurityContextServerLogoutHandler())
-                // Keycloak側でもログアウトを実行するカスタムハンドラ（フロントチャネルリダイレクト）
+                logout.logoutHandler(
+                    DelegatingServerLogoutHandler(
+                        SecurityContextServerLogoutHandler(),
+                        WebSessionServerLogoutHandler(),
+                    ),
+                )
                 logout.logoutSuccessHandler(customLogoutSuccessHandler)
                 logout.logoutUrl("/logout")
             }
@@ -118,12 +123,11 @@ class SecurityConfig(
      * WebFlux の CSRF トークン遅延評価を回避し、常に XSRF-TOKEN Cookie を発行・更新させるフィルター。
      */
     @Bean
-    fun csrfCookieWebFilter(): WebFilter {
-        return WebFilter { exchange: ServerWebExchange, chain: WebFilterChain ->
+    fun csrfCookieWebFilter(): WebFilter =
+        WebFilter { exchange: ServerWebExchange, chain: WebFilterChain ->
             val csrfTokenMono = exchange.getAttribute<Mono<CsrfToken>>(CsrfToken::class.java.name)
             csrfTokenMono?.then(chain.filter(exchange)) ?: chain.filter(exchange)
         }
-    }
 
     /**
      * CORSの設定を構築します。
