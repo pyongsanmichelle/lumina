@@ -1,6 +1,8 @@
 package com.example.bff.presentation.config
 
 import com.example.bff.integration.config.AppProperties
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.reactor.mono
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
@@ -19,15 +21,10 @@ import java.time.Duration
  * カスタムログアウト成功ハンドラ (RP-Initiated Logout対応)。
  *
  * BFFアプリケーションでのログアウト処理が完了した後に実行されます。
- * Keycloak（OpenID Provider）側のセッションも確実に破棄させるため、
- * Keycloakの `end_session_endpoint` へリダイレクトするレスポンスを生成します。
- *
- * 本実装ではフロントチャネル（ブラウザリダイレクト）のみを使用し、
- * バックチャネル（サーバー間HTTP通信）は行いません。
- * ブラウザがKeycloakのログアウトURLに直接リダイレクトされることで、
- * Keycloak側のセッションCookieも同時に破棄されます。
+ * Kotlin Coroutines（monoビルダー）を利用し、非同期処理を同期的に記述して可読性を高めています。
  *
  * @property appProperties アプリケーション設定（KeycloakのログアウトURLやフロントエンドのオリジンを保持）
+ * @property clientRegistrationRepository OAuth2のクライアント設定（client_id等）を非同期で取得するためのリポジトリ
  */
 @Component
 class CustomLogoutSuccessHandler(
@@ -46,82 +43,92 @@ class CustomLogoutSuccessHandler(
     override fun onLogoutSuccess(
         webFilterExchange: WebFilterExchange,
         authentication: Authentication,
-    ): Mono<Void> {
-        val traceId = org.slf4j.MDC.get("trace_id") ?: "no-trace-id"
-        val userId = org.slf4j.MDC.get("user_id") ?: "anonymous"
+    ): Mono<Void> =
+        mono {
+            // ログ出力用のMDC情報取得
+            val traceId = org.slf4j.MDC.get("trace_id") ?: "no-trace-id"
+            val userId = org.slf4j.MDC.get("user_id") ?: "anonymous"
 
-        log.info(
-            "CustomLogoutSuccessHandler.onLogoutSuccess start. traceId={} userId={} authenticationPrincipal={}",
-            traceId,
-            userId,
-            authentication?.name ?: "anonymous",
-        )
+            log.info(
+                "CustomLogoutSuccessHandler.onLogoutSuccess start. traceId={} userId={} authenticationPrincipal={}",
+                traceId,
+                userId,
+                authentication.name,
+            )
 
-        val exchange = webFilterExchange.exchange
-        val response = exchange.response
+            // 認証情報から OIDC の IDトークン (id_token_hint) を安全に抽出
+            val idToken =
+                (authentication as? OAuth2AuthenticationToken)
+                    ?.let { token -> (token.principal as? OidcUser)?.idToken?.tokenValue }
 
-        // Keycloakでのログアウト完了後に戻ってくる、フロントエンドのURLを定義
-        val redirectUri = "${appProperties.frontendOrigin}/"
+            if (idToken == null) {
+                // id_token_hint が無いと Keycloak 側でサイレントログアウトに失敗する可能性があるため警告を残す
+                log.warn("id_token_hint is missing. traceId={} Keycloak may not silently terminate the SSO session.", traceId)
+            }
 
-        // 認証情報から IDトークン (id_token_hint) を抽出
-        // どのセッションを終了させるかをKeycloakに伝えるために必要（無い場合はnullになる）
-        val idToken =
-            (authentication as? OAuth2AuthenticationToken)
-                ?.let { token -> (token.principal as? OidcUser)?.idToken?.tokenValue }
+            // ClientRegistrationの取得 (ここで awaitSingleOrNull() を使い、Monoを解除して直接値を受け取る)
+            // 非同期アクセスですが、スレッドをブロックせずに処理の完了を待機します。
+            val registration =
+                clientRegistrationRepository.findByRegistrationId("keycloak").awaitSingleOrNull()
+                    ?: throw IllegalStateException("OAuth2 client registration 'keycloak' is not found. Check application.yaml")
 
-        return clientRegistrationRepository
-            .findByRegistrationId("keycloak")
-            .doOnNext { registration ->
-                if (idToken == null) {
-                    // id_token_hint が無いと Keycloak がログアウト確認画面を出し、
-                    // 結果としてSSOセッションが終了しないまま画面が進んでしまうことがある
-                    log.warn(
-                        "id_token_hint is missing. traceId={} Keycloak may not silently terminate the SSO session.",
-                        traceId,
-                    )
-                }
-            }.map { registration ->
+            // registrationが取得できなかった場合のフォールバック値を設定
+            val clientId = registration.clientId
+
+            // リダイレクト先URLの構築
+            val redirectUri = "${appProperties.frontendOrigin}/"
+            val redirectLocation =
                 UriComponentsBuilder
                     .fromUriString(appProperties.keycloakLogoutUrl)
                     .queryParam("post_logout_redirect_uri", redirectUri)
-                    .queryParam("client_id", registration.clientId)
+                    .queryParam("client_id", clientId)
                     .apply {
                         if (idToken != null) {
                             queryParam("id_token_hint", idToken)
                         }
-                    }.build()
-                    .encode() // id_token_hint(JWT)や redirect_uri を確実にパーセントエンコード
+                    }.encode() // パラメータ（JWTやURL）を確実にパーセントエンコードする
+                    .build()
                     .toUri()
-            }.flatMap { redirectLocation ->
-                val removeSessionCookie =
-                    ResponseCookie
-                        .from("SESSION", "")
-                        .maxAge(Duration.ZERO)
-                        .path("/")
-                        .httpOnly(true)
-                        .sameSite("Lax")
-                        .build()
 
-                val removeXsrfCookie =
-                    ResponseCookie
-                        .from("XSRF-TOKEN", "")
-                        .maxAge(Duration.ZERO)
-                        .path("/")
-                        .httpOnly(false)
-                        .build()
+            // クッキーの削除設定
+            val response = webFilterExchange.exchange.response
 
-                response.addCookie(removeSessionCookie)
-                response.addCookie(removeXsrfCookie)
-                response.statusCode = HttpStatus.FOUND
-                response.headers.location = redirectLocation
+            // SESSION Cookie 削除用
+            val removeSessionCookie =
+                ResponseCookie
+                    .from("SESSION", "")
+                    .maxAge(Duration.ZERO)
+                    .path("/")
+                    .httpOnly(true)
+                    .sameSite("Lax")
+                    .build()
 
-                log.info(
-                    "CustomLogoutSuccessHandler.onLogoutSuccess redirect. traceId={} redirectLocation={}",
-                    traceId,
-                    redirectLocation,
-                )
+            // XSRF-TOKEN Cookie 削除用
+            val removeXsrfCookie =
+                ResponseCookie
+                    .from("XSRF-TOKEN", "")
+                    .maxAge(Duration.ZERO)
+                    .path("/")
+                    .httpOnly(false)
+                    .build()
 
-                response.setComplete()
-            }
-    }
+            response.addCookie(removeSessionCookie)
+            response.addCookie(removeXsrfCookie)
+
+            // HTTPステータスとLocationヘッダーのセット (302リダイレクト)
+            response.statusCode = HttpStatus.FOUND
+            response.headers.location = redirectLocation
+
+            log.info(
+                "CustomLogoutSuccessHandler.onLogoutSuccess redirect. traceId={} redirectLocation={}",
+                traceId,
+                redirectLocation,
+            )
+
+            // レスポンス処理の完了を待機して終了
+            response.setComplete().awaitSingleOrNull()
+
+            // mono<Void> の戻り値の型合わせのため null を返す
+            return@mono null
+        }
 }
