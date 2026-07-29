@@ -16,15 +16,36 @@
       "serviceAccountsEnabled": false,
       "authorizationServicesEnabled": false,
       "secret": "local-dev-secret-do-not-use-in-prod",
-      "redirectUris": ["http://localhost:8080/bff/login/oauth2/code/keycloak"],
+      "redirectUris": [
+        "http://localhost:8080/bff/login/oauth2/code/keycloak",
+        "http://localhost:3000/*"
+      ],
       "webOrigins": ["http://localhost:3000"],
       "attributes": {
         "backchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "http://localhost:3000/"
+        "post.logout.redirect.uris": "http://localhost:3000/*##+"
       }
     }
   ],
   "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin0@example.com",
+      "firstName": "レルム",
+      "lastName": "管理者",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "realm-management": ["realm-admin"]
+      }
+    },
     {
       "username": "sso-user-uuid-0001",
       "enabled": true,

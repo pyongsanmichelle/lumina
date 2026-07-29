@@ -14,4 +14,16 @@ export default defineNuxtConfig({
       bffOrigin: process.env.BFF_ORIGIN || 'http://localhost:8080',
     },
   },
+
+  // BFF (Spring Boot) への Nitro プロキシ転送設定
+  routeRules: {
+    '/bff/**': {
+      proxy: {
+        to: `${process.env.BFF_INTERNAL_ORIGIN || 'http://bff:8080'}/bff/**`,
+        fetchOptions: {
+          redirect: 'manual', // ← BFFからのLocationヘッダをそのままブラウザに転送させる
+        },
+      },
+    },
+  },
 });

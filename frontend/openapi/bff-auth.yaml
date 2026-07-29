@@ -6,6 +6,9 @@ info:
     docs/auth/oidc_flow.md 4.3節に基づく、認証状態確認エンドポイントの
     フロントエンド型生成専用のOpenAPI定義。BFF実装の正式仕様書ではない。
 paths:
+  # NOTE: POST /bff/logout は openapi-fetch 経由では使用しません。
+  # 代わりに hidden フォームのブラウザナビゲーションで呼び出します（useLogout.ts 参照）。
+  # そのため、このファイルでは定義を削除しています。
   /bff/auth/me:
     get:
       operationId: getAuthMe
